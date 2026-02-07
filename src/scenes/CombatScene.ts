@@ -6,6 +6,7 @@ import { CharacterSystem } from '@/systems/CharacterSystem';
 import { LootSystem } from '@/systems/LootSystem';
 import { InventorySystem } from '@/systems/InventorySystem';
 import { getItem } from '@/data/items';
+import { getMonsterSpriteKey, getMonsterAnimKey, getMonsterTint } from '@/config/assets';
 import type { Monster } from '@/types';
 
 /**
@@ -406,14 +407,28 @@ export class CombatScene extends Phaser.Scene {
     });
 
     // Enemy sprites (øverst, centreret)
-    this.enemies.forEach((_enemy, index) => {
+    this.enemies.forEach((enemy, index) => {
       const x = width / 2 + (index - this.enemies.length / 2) * 60;
       const y = 60;
 
-      // Placeholder sprite (farvet firkant)
-      const sprite = this.add.sprite(x, y, 'tile_wall');
-      sprite.setScale(2);
-      sprite.setTint(0xff0000);
+      // Use real monster sprites
+      const spriteKey = getMonsterSpriteKey(enemy.id);
+      const sprite = this.add.sprite(x, y, spriteKey);
+      sprite.setScale(2); // Scale up for visibility
+      sprite.setOrigin(0.5);
+
+      // Apply monster-specific tint if available
+      const tint = getMonsterTint(enemy.id);
+      if (tint !== undefined) {
+        sprite.setTint(tint);
+      }
+
+      // Play idle animation
+      const animKey = getMonsterAnimKey(enemy.id);
+      if (this.anims.exists(animKey)) {
+        sprite.play(animKey);
+      }
+
       this.enemySprites.push(sprite);
 
       // HP text

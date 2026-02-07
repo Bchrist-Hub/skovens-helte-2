@@ -1,4 +1,12 @@
 import Phaser from 'phaser';
+import {
+  PLAYER_SPRITES,
+  MONSTER_SPRITES,
+  TILE_SPRITES,
+  DECORATION_SPRITES,
+  PLAYER_ANIMS,
+  MONSTER_ANIMS
+} from '@/config/assets';
 
 /**
  * BootScene - Indlæser alle assets og viser loading progress
@@ -15,31 +23,85 @@ export class BootScene extends Phaser.Scene {
     // Setup loading bar
     this.createLoadingBar();
 
-    // TODO: Load assets når vi har dem
-    // For nu laver vi bare placeholder graphics
+    console.log('BootScene: Loading assets...');
 
-    // Eksempel: Load tilemap når vi har det
-    // this.load.tilemapTiledJSON('village', 'assets/maps/village.json');
+    // Load player sprites
+    PLAYER_SPRITES.forEach(sprite => {
+      this.load.spritesheet(sprite.key, sprite.path, {
+        frameWidth: sprite.frameWidth!,
+        frameHeight: sprite.frameHeight!
+      });
+    });
 
-    // Eksempel: Load spritesheets
-    // this.load.spritesheet('player', 'assets/sprites/player.png', {
-    //   frameWidth: 16,
-    //   frameHeight: 16
-    // });
+    // Load monster sprites
+    MONSTER_SPRITES.forEach(sprite => {
+      this.load.spritesheet(sprite.key, sprite.path, {
+        frameWidth: sprite.frameWidth!,
+        frameHeight: sprite.frameHeight!
+      });
+    });
 
-    console.log('BootScene: Assets loading...');
+    // Load tile images
+    TILE_SPRITES.forEach(tile => {
+      this.load.image(tile.key, tile.path);
+    });
+
+    // Load decoration images
+    DECORATION_SPRITES.forEach(deco => {
+      this.load.image(deco.key, deco.path);
+    });
+
+    console.log('BootScene: All assets queued for loading');
   }
 
   create(): void {
     console.log('BootScene: Assets loaded successfully');
 
-    // Create placeholder graphics that we can use until we have real assets
+    // Create animations
+    this.createAnimations();
+
+    // Create placeholder graphics as fallback
     this.createPlaceholderGraphics();
 
     // Transition to TitleScene after a brief delay
     this.time.delayedCall(500, () => {
       this.scene.start('TitleScene');
     });
+  }
+
+  /**
+   * Create all sprite animations
+   */
+  private createAnimations(): void {
+    // Create player animations
+    PLAYER_ANIMS.forEach(anim => {
+      if (!this.anims.exists(anim.key)) {
+        this.anims.create({
+          key: anim.key,
+          frames: this.anims.generateFrameNumbers(anim.spriteKey, {
+            frames: anim.frames
+          }),
+          frameRate: anim.frameRate,
+          repeat: anim.repeat
+        });
+      }
+    });
+
+    // Create monster animations
+    MONSTER_ANIMS.forEach(anim => {
+      if (!this.anims.exists(anim.key)) {
+        this.anims.create({
+          key: anim.key,
+          frames: this.anims.generateFrameNumbers(anim.spriteKey, {
+            frames: anim.frames
+          }),
+          frameRate: anim.frameRate,
+          repeat: anim.repeat
+        });
+      }
+    });
+
+    console.log('BootScene: Animations created');
   }
 
   private createLoadingBar(): void {

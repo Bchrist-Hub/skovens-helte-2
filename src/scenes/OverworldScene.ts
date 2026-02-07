@@ -67,10 +67,11 @@ export class OverworldScene extends Phaser.Scene {
     this.player = this.add.sprite(
       this.playerGridX * this.TILE_SIZE,
       this.playerGridY * this.TILE_SIZE,
-      'player_placeholder'
+      'player'
     );
     this.player.setOrigin(0, 0);
     this.player.setDepth(10); // Above tiles
+    this.player.play('player_idle_down'); // Start with idle animation
 
     // Spawn NPCs for current map
     this.spawnNPCs();
@@ -168,14 +169,20 @@ export class OverworldScene extends Phaser.Scene {
     }
 
     // Start movement
-    this.moveToTile(targetX, targetY);
+    this.moveToTile(targetX, targetY, direction);
   }
 
   /**
    * Bevæg spilleren til et specifikt tile med smooth animation
    */
-  private moveToTile(gridX: number, gridY: number): void {
+  private moveToTile(gridX: number, gridY: number, direction: Direction): void {
     this.isMoving = true;
+
+    // Play walking animation based on direction
+    const walkAnimKey = `player_walk_${direction}`;
+    if (this.anims.exists(walkAnimKey)) {
+      this.player.play(walkAnimKey);
+    }
 
     const targetPixelX = gridX * this.TILE_SIZE;
     const targetPixelY = gridY * this.TILE_SIZE;
@@ -191,6 +198,12 @@ export class OverworldScene extends Phaser.Scene {
         this.isMoving = false;
         this.playerGridX = gridX;
         this.playerGridY = gridY;
+
+        // Play idle animation
+        const idleAnimKey = `player_idle_${direction}`;
+        if (this.anims.exists(idleAnimKey)) {
+          this.player.play(idleAnimKey);
+        }
 
         // Save position
         this.gameState.setPlayerPosition(gridX, gridY);
@@ -264,13 +277,14 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /**
-   * Render the tilemap using placeholder graphics
+   * Render the tilemap using real tile sprites
    */
   private renderMap(): void {
     for (let y = 0; y < this.MAP_HEIGHT; y++) {
       for (let x = 0; x < this.MAP_WIDTH; x++) {
         const tileType = this.tilemap[y][x];
-        const textureName = tileType === this.TILE_WALL ? 'tile_wall' : 'tile_ground';
+        // Use real tile sprites: grass for ground, placeholder for walls (fallback)
+        const textureName = tileType === this.TILE_WALL ? 'tile_wall' : 'grass_tile';
 
         const tile = this.add.sprite(
           x * this.TILE_SIZE,
@@ -378,11 +392,28 @@ export class OverworldScene extends Phaser.Scene {
       const sprite = this.add.sprite(
         npc.tileX * this.TILE_SIZE,
         npc.tileY * this.TILE_SIZE,
-        'player_placeholder' // Using placeholder for now
+        'player' // Use player sprite for NPCs
       );
       sprite.setOrigin(0, 0);
       sprite.setDepth(9); // Just below player
-      sprite.setTint(0x00ff00); // Green tint to distinguish from player
+
+      // Different tints for different NPCs to distinguish them
+      const npcTints: Record<string, number> = {
+        village_elder: 0xcccccc,    // Gray
+        guard: 0x4444ff,            // Blue
+        shopkeeper: 0xffaa00,       // Orange
+        blacksmith: 0x8b4513,       // Brown
+        healer: 0xff88ff,           // Pink
+        mysterious_stranger: 0x8800ff // Purple
+      };
+
+      const tint = npcTints[npc.id] || 0x00ff00;
+      sprite.setTint(tint);
+
+      // Play idle animation
+      if (this.anims.exists('player_idle_down')) {
+        sprite.play('player_idle_down');
+      }
 
       this.npcSprites.set(npc.id, sprite);
     });
