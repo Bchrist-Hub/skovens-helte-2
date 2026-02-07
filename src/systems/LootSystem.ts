@@ -44,4 +44,11 @@ export class LootSystem {
   static calculateTotalXP(defeatedEnemies: Monster[]): number {
     return defeatedEnemies.reduce((total, enemy) => total + enemy.xpReward, 0);
   }
+
+  /**
+   * Beregn total guld fra besejrede monstre
+   */
+  static calculateTotalGold(defeatedEnemies: Monster[]): number {
+    return defeatedEnemies.reduce((total, enemy) => total + enemy.goldReward, 0);
+  }
 }

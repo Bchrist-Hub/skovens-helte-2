@@ -21,6 +21,7 @@ export const MONSTERS: Record<string, Omit<Monster, 'currentHP'>> = {
       def: 2
     },
     xpReward: 5,
+    goldReward: 5,
     loot: [
       { itemId: 'healing_potion', chance: 0.3 }
     ],
@@ -40,6 +41,7 @@ export const MONSTERS: Record<string, Omit<Monster, 'currentHP'>> = {
       def: 3
     },
     xpReward: 10,
+    goldReward: 10,
     loot: [
       { itemId: 'healing_potion', chance: 0.4 }
     ],
@@ -63,6 +65,7 @@ export const MONSTERS: Record<string, Omit<Monster, 'currentHP'>> = {
       def: 5
     },
     xpReward: 15,
+    goldReward: 15,
     loot: [
       { itemId: 'healing_potion', chance: 0.5 },
       { itemId: 'iron_sword', chance: 0.1 }
@@ -87,6 +90,7 @@ export const MONSTERS: Record<string, Omit<Monster, 'currentHP'>> = {
       def: 2
     },
     xpReward: 8,
+    goldReward: 8,
     loot: [
       { itemId: 'mana_potion', chance: 0.4 }
     ],
@@ -106,6 +110,7 @@ export const MONSTERS: Record<string, Omit<Monster, 'currentHP'>> = {
       def: 12
     },
     xpReward: 25,
+    goldReward: 25,
     loot: [
       { itemId: 'large_healing_potion', chance: 0.6 },
       { itemId: 'chainmail', chance: 0.15 }
@@ -130,6 +135,7 @@ export const MONSTERS: Record<string, Omit<Monster, 'currentHP'>> = {
       def: 15
     },
     xpReward: 0, // Boss giver ingen XP (spillet slutter)
+    goldReward: 0, // Dragon giver 500g bonus i CombatScene
     loot: [],
     actions: [
       { type: 'attack', weight: 0.6 },

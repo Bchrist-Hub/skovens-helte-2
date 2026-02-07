@@ -52,6 +52,7 @@ export interface Monster {
   };
   currentHP: number;
   xpReward: number;
+  goldReward: number; // Guld drop ved sejr
   loot: Array<{ itemId: string; chance: number }>;
   actions: Array<{ type: string; weight: number }>;
   aiType: 'basic' | 'aggressive' | 'boss';

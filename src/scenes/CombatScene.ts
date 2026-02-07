@@ -241,16 +241,24 @@ export class CombatScene extends Phaser.Scene {
 
     // Beregn rewards
     const totalXP = LootSystem.calculateTotalXP(this.enemies);
+    const totalGold = LootSystem.calculateTotalGold(this.enemies);
     const loot = LootSystem.generateLoot(this.enemies);
 
-    // Add gold reward for dragon
+    // Add gold reward from monsters
+    this.gameState.addGold(totalGold);
+
+    // Add bonus gold for dragon
     if (dragonDefeated) {
-      this.gameState.addGold(500); // 500 guld for at besejre dragen
+      this.gameState.addGold(500); // 500 guld bonus for at besejre dragen
     }
 
-    // Tilføj loot til inventory
+    // Tilføj loot til inventory (check for fuldt inventory)
+    const droppedLoot: typeof loot = [];
     loot.forEach(drop => {
-      InventorySystem.addItem(inventory, drop.itemId, drop.quantity);
+      const success = InventorySystem.addItem(inventory, drop.itemId, drop.quantity);
+      if (!success) {
+        droppedLoot.push(drop);
+      }
     });
 
     // Tilføj XP og check for level-up
@@ -259,16 +267,25 @@ export class CombatScene extends Phaser.Scene {
     // Vis sejr-besked med item navne
     let message = `Sejr!\n+${totalXP} XP`;
 
+    // Show gold earned
     if (dragonDefeated) {
-      message += `\n+500 guld!`;
+      message += `\n+${totalGold + 500}g (${totalGold}g + 500g bonus)`;
+    } else if (totalGold > 0) {
+      message += `\n+${totalGold}g`;
     }
 
     if (loot.length > 0) {
-      const lootText = loot.map(drop => {
-        const item = getItem(drop.itemId);
-        return `${drop.quantity}x ${item?.name || drop.itemId}`;
-      }).join(', ');
-      message += `\nLoot: ${lootText}`;
+      const receivedLoot = loot.filter(drop => !droppedLoot.includes(drop));
+      if (receivedLoot.length > 0) {
+        const lootText = receivedLoot.map(drop => {
+          const item = getItem(drop.itemId);
+          return `${drop.quantity}x ${item?.name || drop.itemId}`;
+        }).join(', ');
+        message += `\nLoot: ${lootText}`;
+      }
+      if (droppedLoot.length > 0) {
+        message += `\n(Inventory fuld! ${droppedLoot.length} item(s) tabt)`;
+      }
     }
 
     this.showMessage(message);
