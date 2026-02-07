@@ -40,10 +40,21 @@ export class OverworldScene extends Phaser.Scene {
   // Tile types
   private readonly TILE_GROUND = 0;
   private readonly TILE_WALL = 1;
+  private readonly TILE_CLIFF_LARGE = 2;  // 3x3 cliff (blocks 9 tiles)
+  private readonly TILE_CLIFF_SMALL = 3;  // 2x2 cliff (blocks 4 tiles)
 
   // NPCs
   private npcs: NPC[] = [];
   private npcSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
+
+  // Debug
+  private coordinateText!: Phaser.GameObjects.Text;
+
+  // Cliff data (stored separately for proper rendering)
+  private cliffs: Array<{ x: number; y: number; size: 'large' | 'small' }> = [];
+
+  // Decorations (animals, house, etc.)
+  private decorations: Array<{ sprite: Phaser.GameObjects.Sprite; shopId?: string }> = [];
 
   constructor() {
     super({ key: 'OverworldScene' });
@@ -58,6 +69,7 @@ export class OverworldScene extends Phaser.Scene {
     // Create test map
     this.createTestMap();
     this.renderMap();
+    this.placeDecorations();
 
     // Create player
     const savedPos = this.gameState.getState().playerPosition;
@@ -81,6 +93,18 @@ export class OverworldScene extends Phaser.Scene {
     // Setup camera
     this.setupCamera();
 
+    // Create coordinate display (top-left corner, fixed to camera)
+    this.coordinateText = this.add.text(5, 5, '', {
+      fontFamily: 'Arial',
+      fontSize: '10px',
+      color: '#ffff00',
+      backgroundColor: '#000000',
+      padding: { x: 4, y: 2 }
+    });
+    this.coordinateText.setScrollFactor(0); // Fixed to camera
+    this.coordinateText.setDepth(1000); // Always on top
+    this.updateCoordinateDisplay();
+
     // Fade in
     this.cameras.main.fadeIn(500, 0, 0, 0);
 
@@ -89,6 +113,7 @@ export class OverworldScene extends Phaser.Scene {
 
   update(): void {
     this.inputService.update();
+    this.updateCoordinateDisplay();
 
     // DEBUG: Test boss fight (press D for dragon)
     const keyD = this.input.keyboard?.addKey('D');
@@ -101,6 +126,13 @@ export class OverworldScene extends Phaser.Scene {
     const keyS = this.input.keyboard?.addKey('S');
     if (keyS && Phaser.Input.Keyboard.JustDown(keyS)) {
       this.openShop();
+      return;
+    }
+
+    // DEBUG: Test combat (press C for combat)
+    const keyC = this.input.keyboard?.addKey('C');
+    if (keyC && Phaser.Input.Keyboard.JustDown(keyC)) {
+      this.checkForEncounter();
       return;
     }
 
@@ -160,8 +192,9 @@ export class OverworldScene extends Phaser.Scene {
       return; // Out of bounds
     }
 
-    // Check collision with walls
-    if (this.tilemap[targetY][targetX] === this.TILE_WALL) {
+    // Check collision with walls and cliffs
+    const tileType = this.tilemap[targetY][targetX];
+    if (tileType === this.TILE_WALL || tileType === this.TILE_CLIFF_LARGE || tileType === this.TILE_CLIFF_SMALL) {
       return; // Blocked
     }
 
@@ -220,8 +253,8 @@ export class OverworldScene extends Phaser.Scene {
         // Increment encounter steps
         this.gameState.incrementEncounterSteps();
 
-        // Check for random encounter
-        this.checkForEncounter();
+        // Check for random encounter (DISABLED FOR TESTING - use 'C' key instead)
+        // this.checkForEncounter();
 
         // Check for queued direction
         if (this.queuedDirection) {
@@ -261,6 +294,7 @@ export class OverworldScene extends Phaser.Scene {
    */
   private createTestMap(): void {
     this.tilemap = [];
+    this.cliffs = []; // Clear any existing cliffs
 
     for (let y = 0; y < this.MAP_HEIGHT; y++) {
       const row: number[] = [];
@@ -283,17 +317,69 @@ export class OverworldScene extends Phaser.Scene {
 
     // Make sure spawn point is clear
     this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+
+    // Place some cliff obstacles
+    // Large cliff (3x3) at position (4, 3)
+    this.placeCliff(4, 3, 'large');
+
+    // Small cliff (2x2) at position (13, 5)
+    this.placeCliff(13, 5, 'small');
+
+    // Another large cliff (3x3) at position (10, 9)
+    this.placeCliff(10, 9, 'large');
+  }
+
+  /**
+   * Place a cliff obstacle on the map
+   * @param startX Top-left X position
+   * @param startY Top-left Y position
+   * @param size 'large' (3x3) or 'small' (2x2)
+   */
+  private placeCliff(startX: number, startY: number, size: 'large' | 'small'): void {
+    const tileType = size === 'large' ? this.TILE_CLIFF_LARGE : this.TILE_CLIFF_SMALL;
+    const cliffSize = size === 'large' ? 3 : 2;
+
+    // Store cliff data for rendering
+    this.cliffs.push({ x: startX, y: startY, size });
+
+    // Mark tiles as blocked for collision
+    for (let y = 0; y < cliffSize; y++) {
+      for (let x = 0; x < cliffSize; x++) {
+        const tileX = startX + x;
+        const tileY = startY + y;
+
+        // Make sure we're within bounds
+        if (tileX >= 0 && tileX < this.MAP_WIDTH && tileY >= 0 && tileY < this.MAP_HEIGHT) {
+          this.tilemap[tileY][tileX] = tileType;
+        }
+      }
+    }
   }
 
   /**
    * Render the tilemap using real tile sprites
    */
   private renderMap(): void {
+    // First, render all ground and wall tiles
     for (let y = 0; y < this.MAP_HEIGHT; y++) {
       for (let x = 0; x < this.MAP_WIDTH; x++) {
         const tileType = this.tilemap[y][x];
-        // Use real tile sprites: grass for ground, placeholder for walls (fallback)
-        const textureName = tileType === this.TILE_WALL ? 'tile_wall' : 'grass_tile';
+
+        // Skip cliff tiles - they'll be rendered separately
+        if (tileType === this.TILE_CLIFF_LARGE || tileType === this.TILE_CLIFF_SMALL) {
+          // Render grass underneath cliffs
+          const tile = this.add.sprite(
+            x * this.TILE_SIZE,
+            y * this.TILE_SIZE,
+            'grass_tile'
+          );
+          tile.setOrigin(0, 0);
+          tile.setDepth(0);
+          continue;
+        }
+
+        // Use real tile sprites: grass for ground, farmland for walls
+        const textureName = tileType === this.TILE_WALL ? 'farmland_tile' : 'grass_tile';
 
         const tile = this.add.sprite(
           x * this.TILE_SIZE,
@@ -304,6 +390,84 @@ export class OverworldScene extends Phaser.Scene {
         tile.setDepth(0); // Behind player
       }
     }
+
+    // Then render all cliffs on top using stored cliff data
+    this.cliffs.forEach(cliff => {
+      this.renderCliffTiles(cliff.x, cliff.y, cliff.size);
+    });
+  }
+
+  /**
+   * Render a cliff (large 3x3 or small 2x2) using tileset frames
+   * @param startX Top-left X position of cliff
+   * @param startY Top-left Y position of cliff
+   * @param cliffSize 'large' (3x3) or 'small' (2x2)
+   */
+  private renderCliffTiles(startX: number, startY: number, cliffSize: 'large' | 'small'): void {
+    const isLarge = cliffSize === 'large';
+    const size = isLarge ? 3 : 2;
+    const baseFrame = isLarge ? 0 : 9; // Large cliff: frames 0-8, Small cliff: frames 9,10,12,13
+    const spriteSheetWidth = 3; // Cliff_Tile.png is 3 tiles wide
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const tileX = startX + x;
+        const tileY = startY + y;
+        // Use spritesheet width (3) instead of cliff size for frame calculation
+        const frameIndex = baseFrame + (y * spriteSheetWidth) + x;
+
+        const tile = this.add.sprite(
+          tileX * this.TILE_SIZE,
+          tileY * this.TILE_SIZE,
+          'cliff_tileset',
+          frameIndex
+        );
+        tile.setOrigin(0, 0);
+        tile.setDepth(1); // Above ground tiles but below player
+      }
+    }
+  }
+
+  /**
+   * Place decorations (animals, house, etc.)
+   */
+  private placeDecorations(): void {
+    // Clear any existing decorations
+    this.decorations.forEach(deco => deco.sprite.destroy());
+    this.decorations = [];
+
+    // Place house (96x128 = 6x8 tiles) at position (16, 4)
+    // House is a shop
+    const house = this.add.sprite(
+      16 * this.TILE_SIZE,
+      4 * this.TILE_SIZE,
+      'house_wood'
+    );
+    house.setOrigin(0, 0);
+    house.setDepth(5); // Above ground, below player
+    house.setScale(0.5); // 96x128 at 0.5x = 48x64
+    this.decorations.push({ sprite: house, shopId: 'village_shop' });
+
+    // Place animals (64x64 at 0.25x scale = 16x16)
+    const animalPositions = [
+      { key: 'cow', x: 3, y: 3 },
+      { key: 'pig', x: 6, y: 3 },
+      { key: 'chicken', x: 3, y: 6 },
+      { key: 'sheep', x: 6, y: 6 }
+    ];
+
+    animalPositions.forEach(({ key, x, y }) => {
+      const animal = this.add.sprite(
+        x * this.TILE_SIZE,
+        y * this.TILE_SIZE,
+        key,
+        0  // Use frame 0 (first frame of the spritesheet)
+      );
+      animal.setOrigin(0, 0);
+      animal.setDepth(5);
+      animal.setScale(0.5); // 32x32 at 0.5x = 16x16
+      this.decorations.push({ sprite: animal });
+    });
   }
 
   /**
@@ -436,6 +600,16 @@ export class OverworldScene extends Phaser.Scene {
    * Try to interact with NPC in front of player
    */
   private tryInteract(): void {
+    // First check for decorations with shops (like the house)
+    const decoration = this.getInteractableDecoration();
+    if (decoration && decoration.shopId) {
+      const shop = getShop(decoration.shopId);
+      if (shop) {
+        this.scene.launch('ShopScene', { shop });
+        return;
+      }
+    }
+
     // Check all 4 directions for NPCs
     const directions: Direction[] = ['up', 'down', 'left', 'right'];
 
@@ -466,6 +640,39 @@ export class OverworldScene extends Phaser.Scene {
     }
 
     console.log('No NPC nearby to interact with');
+  }
+
+  /**
+   * Get interactable decoration near player
+   */
+  private getInteractableDecoration(): { sprite: Phaser.GameObjects.Sprite; shopId?: string } | null {
+    // Check if player is adjacent to any decoration with a shopId
+    for (const deco of this.decorations) {
+      if (!deco.shopId) continue;
+
+      const decoX = deco.sprite.x / this.TILE_SIZE;
+      const decoY = deco.sprite.y / this.TILE_SIZE;
+      const decoWidth = (deco.sprite.width * deco.sprite.scaleX) / this.TILE_SIZE;
+      const decoHeight = (deco.sprite.height * deco.sprite.scaleY) / this.TILE_SIZE;
+
+      // Check if player is adjacent to this decoration
+      // Player is at (playerGridX, playerGridY)
+      // Decoration spans from (decoX, decoY) to (decoX + decoWidth, decoY + decoHeight)
+
+      // Check all adjacent positions
+      for (let dy = -1; dy <= decoHeight; dy++) {
+        for (let dx = -1; dx <= decoWidth; dx++) {
+          const checkX = Math.floor(decoX + dx);
+          const checkY = Math.floor(decoY + dy);
+
+          if (checkX === this.playerGridX && checkY === this.playerGridY) {
+            return deco;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -524,11 +731,20 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /**
+   * Update coordinate display
+   */
+  private updateCoordinateDisplay(): void {
+    this.coordinateText.setText(`X: ${this.playerGridX}, Y: ${this.playerGridY}`);
+  }
+
+  /**
    * Cleanup når scene lukkes
    */
   shutdown(): void {
     this.inputService.destroy();
     this.npcSprites.forEach(sprite => sprite.destroy());
     this.npcSprites.clear();
+    this.decorations.forEach(deco => deco.sprite.destroy());
+    this.decorations = [];
   }
 }

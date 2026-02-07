@@ -81,8 +81,21 @@ export const TILE_SPRITES: ImageConfig[] = [
     path: `${ASSET_BASE_PATH}/Tiles/Water_Middle.png`
   },
   {
-    key: 'cliff_tile',
-    path: `${ASSET_BASE_PATH}/Tiles/Cliff_Tile.png`
+    key: 'farmland_tile',
+    path: `${ASSET_BASE_PATH}/Tiles/FarmLand_Tile.png`
+  }
+];
+
+/**
+ * Tileset sprite configurations (spritesheets with multiple tiles)
+ * Cliff_Tile: 16x16 tiles, Large cliff (3x3=9 tiles), Small cliff (2x2=4 tiles)
+ */
+export const TILESET_SPRITES: SpriteConfig[] = [
+  {
+    key: 'cliff_tileset',
+    path: `${ASSET_BASE_PATH}/Tiles/Cliff_Tile.png`,
+    frameWidth: 16,
+    frameHeight: 16
   }
 ];
 
@@ -105,6 +118,36 @@ export const DECORATION_SPRITES: ImageConfig[] = [
   {
     key: 'chest',
     path: `${ASSET_BASE_PATH}/Outdoor decoration/Chest.png`
+  }
+];
+
+/**
+ * Animal sprite configurations (32x32 per frame in 2x2 grid)
+ */
+export const ANIMAL_SPRITES: SpriteConfig[] = [
+  {
+    key: 'cow',
+    path: `${ASSET_BASE_PATH}/Animals/Cow/Cow.png`,
+    frameWidth: 32,
+    frameHeight: 32
+  },
+  {
+    key: 'pig',
+    path: `${ASSET_BASE_PATH}/Animals/Pig/Pig.png`,
+    frameWidth: 32,
+    frameHeight: 32
+  },
+  {
+    key: 'chicken',
+    path: `${ASSET_BASE_PATH}/Animals/Chicken/Chicken.png`,
+    frameWidth: 32,
+    frameHeight: 32
+  },
+  {
+    key: 'sheep',
+    path: `${ASSET_BASE_PATH}/Animals/Sheep/Sheep.png`,
+    frameWidth: 32,
+    frameHeight: 32
   }
 ];
 

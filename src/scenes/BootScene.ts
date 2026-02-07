@@ -3,7 +3,9 @@ import {
   PLAYER_SPRITES,
   MONSTER_SPRITES,
   TILE_SPRITES,
+  TILESET_SPRITES,
   DECORATION_SPRITES,
+  ANIMAL_SPRITES,
   PLAYER_ANIMS,
   MONSTER_ANIMS
 } from '@/config/assets';
@@ -44,6 +46,22 @@ export class BootScene extends Phaser.Scene {
     // Load tile images
     TILE_SPRITES.forEach(tile => {
       this.load.image(tile.key, tile.path);
+    });
+
+    // Load tileset sprites (spritesheets with multiple tiles)
+    TILESET_SPRITES.forEach(tileset => {
+      this.load.spritesheet(tileset.key, tileset.path, {
+        frameWidth: tileset.frameWidth!,
+        frameHeight: tileset.frameHeight!
+      });
+    });
+
+    // Load animal sprites (64x64 spritesheets)
+    ANIMAL_SPRITES.forEach(animal => {
+      this.load.spritesheet(animal.key, animal.path, {
+        frameWidth: animal.frameWidth!,
+        frameHeight: animal.frameHeight!
+      });
     });
 
     // Load decoration images
