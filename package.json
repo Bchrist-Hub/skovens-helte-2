@@ -1,0 +1,19 @@
+{
+  "name": "skovens-helte",
+  "version": "1.0.0",
+  "description": "Et kort browser-baseret 2D RPG inspireret af SNES-æraen",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.80.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11"
+  }
+}
