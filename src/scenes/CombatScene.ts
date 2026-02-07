@@ -414,8 +414,13 @@ export class CombatScene extends Phaser.Scene {
       // Use real monster sprites
       const spriteKey = getMonsterSpriteKey(enemy.id);
       const sprite = this.add.sprite(x, y, spriteKey);
-      sprite.setScale(2); // Scale up for visibility
       sprite.setOrigin(0.5);
+
+      // Scale appropriately for combat
+      // Slime (32x32) -> scale 2x = 64x64
+      // Skeleton (48x64) -> scale 1.5x = 72x96 (slightly larger, more visible)
+      const baseScale = spriteKey === 'slime_green' ? 2.0 : 1.5;
+      sprite.setScale(baseScale);
 
       // Apply monster-specific tint if available
       const tint = getMonsterTint(enemy.id);
