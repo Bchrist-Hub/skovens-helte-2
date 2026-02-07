@@ -71,6 +71,7 @@ export interface GameState {
   playTime: number;
   encounterSteps: number;
   gold: number; // Spillerens guld
+  battlesWon: number; // Antal kampe vundet
 }
 
 export interface CombatEvent {
@@ -102,6 +103,18 @@ export interface MapTrigger {
   type: 'dialog' | 'transition' | 'event' | 'shop';
   condition?: string;
   payload: string;
+}
+
+export interface NPC {
+  id: string;
+  name: string;
+  sprite: string;
+  tileX: number;
+  tileY: number;
+  dialog: string; // Dialog ID from dialogs data
+  facingDirection?: Direction;
+  shopId?: string; // Optional shop reference
+  condition?: string; // Event flag condition for visibility
 }
 
 // Input system types

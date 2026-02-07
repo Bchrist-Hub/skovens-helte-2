@@ -13,7 +13,7 @@ export class MenuScene extends Phaser.Scene {
   private gameState!: GameStateManager;
 
   // Menu state
-  private currentTab: 'stats' | 'inventory' | 'equipment' = 'stats';
+  private currentTab: 'stats' | 'inventory' | 'equipment' | 'system' = 'stats';
   private selectedItemIndex: number = 0;
   private canInput: boolean = false;
 
@@ -65,8 +65,8 @@ export class MenuScene extends Phaser.Scene {
       this.switchTab(1);
     }
 
-    // Navigate items (hvis i inventory/equipment tab)
-    if (this.currentTab === 'inventory' || this.currentTab === 'equipment') {
+    // Navigate items (hvis i inventory/equipment/system tab)
+    if (this.currentTab === 'inventory' || this.currentTab === 'equipment' || this.currentTab === 'system') {
       if (this.inputService.justPressed('up')) {
         this.selectedItemIndex = Math.max(0, this.selectedItemIndex - 1);
         this.updateTabContent();
@@ -76,9 +76,13 @@ export class MenuScene extends Phaser.Scene {
         this.updateTabContent();
       }
 
-      // Use/equip item
+      // Use/equip item or execute system option
       if (this.inputService.justPressed('action')) {
-        this.useSelectedItem();
+        if (this.currentTab === 'system') {
+          this.executeSystemOption();
+        } else {
+          this.useSelectedItem();
+        }
       }
     }
   }
@@ -106,7 +110,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private createTabs(): void {
-    const tabs = ['Stats', 'Inventory', 'Equipment'];
+    const tabs = ['Stats', 'Inventory', 'Equipment', 'System'];
     const startX = 20;
     const y = 20;
     const spacing = 70;
@@ -118,7 +122,7 @@ export class MenuScene extends Phaser.Scene {
         color: '#888888'
       });
 
-      const tabId = tabName.toLowerCase() as 'stats' | 'inventory' | 'equipment';
+      const tabId = tabName.toLowerCase() as 'stats' | 'inventory' | 'equipment' | 'system';
       this.tabTexts.set(tabId, text);
     });
 
@@ -138,7 +142,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private switchTab(direction: number): void {
-    const tabs: Array<'stats' | 'inventory' | 'equipment'> = ['stats', 'inventory', 'equipment'];
+    const tabs: Array<'stats' | 'inventory' | 'equipment' | 'system'> = ['stats', 'inventory', 'equipment', 'system'];
     const currentIndex = tabs.indexOf(this.currentTab);
     const newIndex = (currentIndex + direction + tabs.length) % tabs.length;
 
@@ -162,6 +166,9 @@ export class MenuScene extends Phaser.Scene {
         break;
       case 'equipment':
         this.showEquipmentContent();
+        break;
+      case 'system':
+        this.showSystemContent();
         break;
     }
   }
@@ -294,6 +301,88 @@ export class MenuScene extends Phaser.Scene {
 
     // Limit max index to 1 (weapon or armor)
     this.selectedItemIndex = Math.min(this.selectedItemIndex, 1);
+  }
+
+  private showSystemContent(): void {
+    const systemOptions = [
+      { label: 'Gem Spil', action: 'save' },
+      { label: 'Tilbage til Titel', action: 'title' },
+      { label: 'Luk Menu', action: 'close' }
+    ];
+
+    let y = 50;
+
+    systemOptions.forEach((option, index) => {
+      const isSelected = index === this.selectedItemIndex;
+      const color = isSelected ? '#ffff00' : '#ffffff';
+
+      const text = this.add.text(20, y, option.label, {
+        fontFamily: 'Arial',
+        fontSize: '14px',
+        color: color,
+        fontStyle: isSelected ? 'bold' : 'normal'
+      });
+
+      this.contentContainer.add(text);
+      y += 30;
+    });
+
+    // Limit max index
+    this.selectedItemIndex = Math.min(this.selectedItemIndex, systemOptions.length - 1);
+  }
+
+  private executeSystemOption(): void {
+    const systemOptions = ['save', 'title', 'close'];
+    const selectedOption = systemOptions[this.selectedItemIndex];
+
+    switch (selectedOption) {
+      case 'save':
+        this.gameState.save();
+        // Show feedback
+        const savedText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height - 30, 'Spillet er gemt!', {
+          fontFamily: 'Arial',
+          fontSize: '14px',
+          color: '#00ff00',
+          fontStyle: 'bold'
+        });
+        savedText.setOrigin(0.5);
+
+        // Fade out after 1 second
+        this.time.delayedCall(1000, () => {
+          savedText.destroy();
+        });
+        break;
+
+      case 'title':
+        this.canInput = false;
+
+        // Get OverworldScene reference BEFORE stopping anything
+        const overworldScene = this.scene.get('OverworldScene') as Phaser.Scene;
+
+        if (overworldScene && overworldScene.cameras) {
+          // Set up fade and callback
+          overworldScene.cameras.main.fadeOut(500, 0, 0, 0);
+          overworldScene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            // Stop OverworldScene
+            this.scene.stop('OverworldScene');
+            // Start TitleScene
+            this.scene.start('TitleScene');
+          });
+
+          // Stop MenuScene immediately (don't wait for fade)
+          this.scene.stop('MenuScene');
+        } else {
+          // Fallback - just transition directly
+          this.scene.stop('MenuScene');
+          this.scene.stop('OverworldScene');
+          this.scene.start('TitleScene');
+        }
+        break;
+
+      case 'close':
+        this.closeMenu();
+        break;
+    }
   }
 
   private useSelectedItem(): void {

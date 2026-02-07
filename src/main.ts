@@ -6,6 +6,7 @@ import { DialogScene } from '@/scenes/DialogScene';
 import { CombatScene } from '@/scenes/CombatScene';
 import { MenuScene } from '@/scenes/MenuScene';
 import { ShopScene } from '@/scenes/ShopScene';
+import { VictoryScene } from '@/scenes/VictoryScene';
 
 // Game configuration
 const config: Phaser.Types.Core.GameConfig = {
@@ -47,7 +48,8 @@ const config: Phaser.Types.Core.GameConfig = {
     DialogScene,
     CombatScene,
     MenuScene,
-    ShopScene
+    ShopScene,
+    VictoryScene
   ],
 
   // Physics (we're using grid-based movement, so we don't need Arcade physics)

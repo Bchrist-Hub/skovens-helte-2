@@ -20,6 +20,11 @@ export class TitleScene extends Phaser.Scene {
     this.inputService = new InputService(this);
     this.gameState = GameStateManager.getInstance();
 
+    // Reset state when scene restarts
+    this.menuOptions = [];
+    this.selectedOption = 0;
+    this.canInput = false;
+
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
@@ -36,24 +41,28 @@ export class TitleScene extends Phaser.Scene {
     const startY = height / 2 + 20;
     const spacing = 30;
 
-    const newGameText = this.add.text(width / 2, startY, 'Nyt Spil', {
-      fontFamily: 'Arial',
-      fontSize: '16px',
-      color: '#cccccc'
-    });
-    newGameText.setOrigin(0.5);
-    this.menuOptions.push(newGameText);
+    // Show "Continue" first if save data exists
+    const hasSave = this.gameState.hasSaveData();
+    let currentY = startY;
 
-    // Only show "Continue" if save data exists
-    if (this.gameState.hasSaveData()) {
-      const continueText = this.add.text(width / 2, startY + spacing, 'Fortsæt', {
+    if (hasSave) {
+      const continueText = this.add.text(width / 2, currentY, 'Fortsæt', {
         fontFamily: 'Arial',
         fontSize: '16px',
         color: '#cccccc'
       });
       continueText.setOrigin(0.5);
       this.menuOptions.push(continueText);
+      currentY += spacing;
     }
+
+    const newGameText = this.add.text(width / 2, currentY, 'Nyt Spil', {
+      fontFamily: 'Arial',
+      fontSize: '16px',
+      color: '#cccccc'
+    });
+    newGameText.setOrigin(0.5);
+    this.menuOptions.push(newGameText);
 
     // Initial selection
     this.updateSelection();
@@ -102,13 +111,17 @@ export class TitleScene extends Phaser.Scene {
   private selectOption(): void {
     this.canInput = false;
 
-    if (this.selectedOption === 0) {
-      // New Game
-      this.gameState.newGame();
-      this.startGame();
-    } else {
+    const hasSave = this.gameState.hasSaveData();
+
+    // If save exists: 0 = Continue, 1 = New Game
+    // If no save: 0 = New Game
+    if (hasSave && this.selectedOption === 0) {
       // Continue
       this.gameState.load();
+      this.startGame();
+    } else {
+      // New Game
+      this.gameState.newGame();
       this.startGame();
     }
   }

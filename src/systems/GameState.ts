@@ -81,6 +81,14 @@ export class GameStateManager {
     return false;
   }
 
+  getBattlesWon(): number {
+    return this.state.battlesWon;
+  }
+
+  incrementBattlesWon(): void {
+    this.state.battlesWon++;
+  }
+
   /**
    * Opret en ny spil-tilstand med default værdier
    */
@@ -136,7 +144,8 @@ export class GameStateManager {
       playerPosition: { x: 8, y: 8 },
       playTime: 0,
       encounterSteps: 0,
-      gold: 100 // Starter med 100 guld
+      gold: 100, // Starter med 100 guld
+      battlesWon: 0 // Antal kampe vundet
     };
   }
 

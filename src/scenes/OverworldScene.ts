@@ -3,7 +3,10 @@ import { InputService } from '@/services/InputService';
 import { GameStateManager } from '@/systems/GameState';
 import { generateEncounter, createMonster } from '@/data/monsters';
 import { getShop } from '@/data/shops';
-import type { Direction, DialogEntry } from '@/types';
+import { getNPCsForMap } from '@/data/npcs';
+import { getDialog } from '@/data/dialogs';
+import { EventSystem } from '@/systems/EventSystem';
+import type { Direction, DialogEntry, NPC } from '@/types';
 
 /**
  * OverworldScene - Hovedscene hvor spilleren bevæger sig rundt
@@ -38,6 +41,10 @@ export class OverworldScene extends Phaser.Scene {
   private readonly TILE_GROUND = 0;
   private readonly TILE_WALL = 1;
 
+  // NPCs
+  private npcs: NPC[] = [];
+  private npcSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
+
   constructor() {
     super({ key: 'OverworldScene' });
   }
@@ -64,6 +71,9 @@ export class OverworldScene extends Phaser.Scene {
     );
     this.player.setOrigin(0, 0);
     this.player.setDepth(10); // Above tiles
+
+    // Spawn NPCs for current map
+    this.spawnNPCs();
 
     // Setup camera
     this.setupCamera();
@@ -100,11 +110,11 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
 
-    // Test dialog (press T)
+    // Interact with NPCs (press Enter/Space)
     if (this.inputService.justPressed('action') && !this.isMoving) {
       // Check if DialogScene is already running
       if (!this.scene.isActive('DialogScene')) {
-        this.showTestDialog();
+        this.tryInteract();
       }
       return;
     }
@@ -117,29 +127,6 @@ export class OverworldScene extends Phaser.Scene {
         this.tryMove(direction);
       }
     }
-  }
-
-  /**
-   * Test dialog - viser en eksempel-dialog
-   */
-  private showTestDialog(): void {
-    const testDialog: DialogEntry = {
-      id: 'test_dialog',
-      speaker: 'Ældsten',
-      lines: [
-        'Velkommen til Skovens Helte!',
-        'Dette er en test-dialog med typewriter-effekt.',
-        'Tryk ENTER for at fortsætte til næste linje.'
-      ]
-    };
-
-    // Launch DialogScene som overlay med dialog data
-    this.scene.launch('DialogScene', {
-      dialog: testDialog,
-      onComplete: () => {
-        console.log('Dialog completed!');
-      }
-    });
   }
 
   /**
@@ -170,9 +157,14 @@ export class OverworldScene extends Phaser.Scene {
       return; // Out of bounds
     }
 
-    // Check collision
+    // Check collision with walls
     if (this.tilemap[targetY][targetX] === this.TILE_WALL) {
       return; // Blocked
+    }
+
+    // Check collision with NPCs
+    if (this.getNPCAt(targetX, targetY)) {
+      return; // Blocked by NPC
     }
 
     // Start movement
@@ -366,9 +358,135 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /**
+   * Spawn NPCs for current map
+   */
+  private spawnNPCs(): void {
+    const currentMap = this.gameState.getState().currentMap;
+    const eventFlags = this.gameState.getEventFlags();
+
+    // Get NPCs for this map
+    this.npcs = getNPCsForMap(currentMap);
+
+    // Filter NPCs based on conditions
+    this.npcs = this.npcs.filter(npc => {
+      if (!npc.condition) return true;
+      return EventSystem.checkCondition(eventFlags, npc.condition);
+    });
+
+    // Spawn NPC sprites
+    this.npcs.forEach(npc => {
+      const sprite = this.add.sprite(
+        npc.tileX * this.TILE_SIZE,
+        npc.tileY * this.TILE_SIZE,
+        'player_placeholder' // Using placeholder for now
+      );
+      sprite.setOrigin(0, 0);
+      sprite.setDepth(9); // Just below player
+      sprite.setTint(0x00ff00); // Green tint to distinguish from player
+
+      this.npcSprites.set(npc.id, sprite);
+    });
+
+    console.log(`Spawned ${this.npcs.length} NPCs`);
+  }
+
+  /**
+   * Try to interact with NPC in front of player
+   */
+  private tryInteract(): void {
+    // Check all 4 directions for NPCs
+    const directions: Direction[] = ['up', 'down', 'left', 'right'];
+
+    for (const direction of directions) {
+      let checkX = this.playerGridX;
+      let checkY = this.playerGridY;
+
+      switch (direction) {
+        case 'up':
+          checkY--;
+          break;
+        case 'down':
+          checkY++;
+          break;
+        case 'left':
+          checkX--;
+          break;
+        case 'right':
+          checkX++;
+          break;
+      }
+
+      const npc = this.getNPCAt(checkX, checkY);
+      if (npc) {
+        this.interactWithNPC(npc);
+        return;
+      }
+    }
+
+    console.log('No NPC nearby to interact with');
+  }
+
+  /**
+   * Get NPC at specific grid position
+   */
+  private getNPCAt(gridX: number, gridY: number): NPC | null {
+    return this.npcs.find(npc => npc.tileX === gridX && npc.tileY === gridY) || null;
+  }
+
+  /**
+   * Interact with an NPC
+   */
+  private interactWithNPC(npc: NPC): void {
+    console.log(`Interacting with ${npc.name}`);
+
+    // Check if NPC has a shop
+    if (npc.shopId) {
+      const shop = getShop(npc.shopId);
+      if (shop) {
+        this.scene.launch('ShopScene', { shop });
+        return;
+      }
+    }
+
+    // Show NPC dialog
+    const dialog = getDialog(npc.dialog);
+    if (!dialog) {
+      console.error(`Dialog ${npc.dialog} not found!`);
+      return;
+    }
+
+    this.scene.launch('DialogScene', {
+      dialog: dialog,
+      onComplete: () => {
+        // Set event flag if dialog has one
+        if (dialog.setsFlag) {
+          this.gameState.setEventFlag(dialog.setsFlag, true);
+        }
+
+        // Refresh NPCs (in case flags changed visibility)
+        this.refreshNPCs();
+      }
+    });
+  }
+
+  /**
+   * Refresh NPCs (after event flags change)
+   */
+  private refreshNPCs(): void {
+    // Clear existing NPC sprites
+    this.npcSprites.forEach(sprite => sprite.destroy());
+    this.npcSprites.clear();
+
+    // Respawn NPCs
+    this.spawnNPCs();
+  }
+
+  /**
    * Cleanup når scene lukkes
    */
   shutdown(): void {
     this.inputService.destroy();
+    this.npcSprites.forEach(sprite => sprite.destroy());
+    this.npcSprites.clear();
   }
 }

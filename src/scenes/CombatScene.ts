@@ -233,9 +233,20 @@ export class CombatScene extends Phaser.Scene {
     const player = this.gameState.getPlayer();
     const inventory = this.gameState.getInventory();
 
+    // Increment battles won
+    this.gameState.incrementBattlesWon();
+
+    // Check if dragon was defeated
+    const dragonDefeated = this.enemies.some(enemy => enemy.id === 'red_dragon');
+
     // Beregn rewards
     const totalXP = LootSystem.calculateTotalXP(this.enemies);
     const loot = LootSystem.generateLoot(this.enemies);
+
+    // Add gold reward for dragon
+    if (dragonDefeated) {
+      this.gameState.addGold(500); // 500 guld for at besejre dragen
+    }
 
     // Tilføj loot til inventory
     loot.forEach(drop => {
@@ -248,6 +259,10 @@ export class CombatScene extends Phaser.Scene {
     // Vis sejr-besked med item navne
     let message = `Sejr!\n+${totalXP} XP`;
 
+    if (dragonDefeated) {
+      message += `\n+500 guld!`;
+    }
+
     if (loot.length > 0) {
       const lootText = loot.map(drop => {
         const item = getItem(drop.itemId);
@@ -258,20 +273,33 @@ export class CombatScene extends Phaser.Scene {
 
     this.showMessage(message);
 
+    // Set dragon defeated flag if applicable
+    if (dragonDefeated) {
+      this.gameState.setEventFlag('dragon_defeated', true);
+    }
+
     // Hvis level-up, vis det efter en delay
     if (levelUpResult.leveledUp) {
       this.time.delayedCall(2000, () => {
         this.showLevelUpMessage(levelUpResult);
 
-        // Returnér til overworld efter level-up besked
+        // Returnér til overworld eller victory scene efter level-up besked
         this.time.delayedCall(3000, () => {
-          this.returnToOverworld();
+          if (dragonDefeated) {
+            this.showVictoryScene();
+          } else {
+            this.returnToOverworld();
+          }
         });
       });
     } else {
       // Ingen level-up, returner efter kort delay
       this.time.delayedCall(3000, () => {
-        this.returnToOverworld();
+        if (dragonDefeated) {
+          this.showVictoryScene();
+        } else {
+          this.returnToOverworld();
+        }
       });
     }
   }
@@ -317,6 +345,19 @@ export class CombatScene extends Phaser.Scene {
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.stop();
       this.scene.resume('OverworldScene');
+    });
+  }
+
+  /**
+   * Vis victory scene (efter dragon defeat)
+   */
+  private showVictoryScene(): void {
+    this.cameras.main.fadeOut(500, 0, 0, 0);
+
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.scene.stop('CombatScene');
+      this.scene.stop('OverworldScene');
+      this.scene.start('VictoryScene');
     });
   }
 
