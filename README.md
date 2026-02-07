@@ -1,142 +1,260 @@
-# Skovens Helte
+# Skovens Helte (Heroes of the Forest)
 
-Et kort browser-baseret 2D RPG inspireret af SNES-æraen, bygget med Phaser 3 og TypeScript.
+A browser-based 2D RPG inspired by classic SNES games, built with Phaser 3 and TypeScript.
 
-## 🎮 Features (Fase 1 - Fundament)
+## 🎮 Game Overview
 
-✅ **Grid-baseret bevægelse** - Smooth tile-for-tile bevægelse (16x16 px tiles)
-✅ **Centraliseret input-håndtering** - InputService forhindrer input-konflikter mellem scenes
-✅ **Scene-system** - Boot, Title, Overworld, Dialog scenes
-✅ **Dialog-system** - Typewriter-effekt, JRPG-style dialog-bokse
-✅ **Kollisionsdetektion** - Grid-baseret kollision med vægge
-✅ **Kamera-system** - Følger spilleren smooth
-✅ **Save/Load** - localStorage-baseret gem-system
-✅ **Pixel-perfect rendering** - SNES-style 256x224 opløsning med nearest-neighbor scaling
+**Skovens Helte** is a turn-based RPG where you explore a fantasy world, battle monsters, interact with NPCs, and ultimately defeat the Red Dragon threatening the village. The game features a classic 256x224 pixel SNES-style resolution with grid-based movement and strategic turn-based combat.
 
-## 🚀 Kom i gang
+## ✨ Features
 
-### Installation
+### Core Systems
+- **Grid-based Overworld**: Explore a tile-based world with collision detection
+- **Turn-based Combat**: Strategic battles with attack/defend/item mechanics
+- **Inventory System**: Collect and manage potions, equipment, and loot
+- **Equipment System**: Weapons and armor that affect your stats
+- **NPC Interaction**: Talk to villagers and receive quests
+- **Shop System**: Buy potions and equipment with gold
+- **Save/Load System**: Persistent game state using localStorage
+- **Event System**: Conditional NPC spawning and dialog based on story flags
+- **Level System**: Gain experience and level up to increase stats
+- **Victory Screen**: End-game statistics display
 
+### Game Content
+- **3 Explorable Maps**: Village, Forest North/South, Mountain
+- **6 Monster Types**: Slimes, Wolves, Goblins, Bats, Golems, and the Red Dragon boss
+- **9 Equipment Items**: Wooden Sword → Iron Sword → Steel Sword (weapons), Leather Armor → Chainmail → Plate Armor (armor)
+- **4 Consumable Items**: Healing Potions (small/large), Mana Potions (small/large)
+- **6 NPCs**: Village Elder, Guard, Shopkeeper, Blacksmith, Healer, and Mysterious Stranger
+- **Dynamic Dialog System**: Context-sensitive conversations with story progression
+
+## 🚀 Installation
+
+### Prerequisites
+- Node.js 16+ and npm/yarn
+
+### Setup
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/skovens-helte-2.git
+cd skovens-helte-2
+
+# Install dependencies
 npm install
-```
 
-### Kør udviklings-server
-
-```bash
+# Start development server
 npm run dev
-```
 
-Spillet åbner automatisk i din browser på `http://localhost:3000`
-
-### Byg til produktion
-
-```bash
+# Build for production
 npm run build
 ```
 
-Dette genererer en optimeret build i `dist/` mappen.
+The game will be available at `http://localhost:5173` (or the port shown in your terminal).
 
-## 🎯 Kontrolskema
+## 🎯 Controls
 
-- **Piletaster / WASD** - Bevægelse
-- **Enter / Space** - Handling / Bekræft / Vis test-dialog
-- **Escape** - Annuller / Menu
-- **M** - Åbn menu (kommer i næste fase)
+| Action | Key |
+|--------|-----|
+| Move | Arrow Keys |
+| Interact / Confirm | Enter |
+| Open Menu | Escape |
+| Cancel / Back | Escape |
 
-## 📁 Projekt-struktur
+### Menu Navigation
+- **Arrow Keys**: Navigate options
+- **Enter**: Select option
+- **Escape**: Close menu / Back
+
+## 📖 Gameplay Guide
+
+### Starting Out
+1. **New Game**: Start at the village with basic equipment (Wooden Sword, Leather Armor)
+2. **Talk to NPCs**: Interact with the Village Elder to learn about the dragon threat
+3. **Explore Safely**: Start in Forest North (beginner area) to level up
+
+### Combat Tips
+- **Defend First Turn**: Reduce damage while learning enemy patterns
+- **Use Potions Wisely**: Don't waste expensive potions on easy battles
+- **Check Stats**: Open Menu (Esc) → Stats tab to monitor your HP/level
+- **Flee When Low**: Better to retreat and heal than to die
+
+### Progression Path
+1. **Forest North** (Lv 1-3): Fight Slimes and Wolves
+   - Collect healing potions
+   - Save gold for better equipment
+
+2. **Forest South** (Lv 3-5): Fight Wolves and Goblins
+   - Upgrade to Iron Sword (150g) and Chainmail (300g)
+   - Stock up on Large Healing Potions
+
+3. **Mountain** (Lv 5-8): Fight Bats and Stone Golems
+   - Reach Level 8+ before challenging the dragon
+   - Get Steel Sword (500g) and Plate Armor (800g)
+
+4. **Dragon's Lair** (Lv 8+): Final boss battle
+   - Bring 5+ Large Healing Potions
+   - Defend when low HP (<30%)
+   - Watch for Fire Breath special attack
+
+### Economy & Shopping
+- **Gold Sources**: Monster drops (5-25g per monster) + selling loot
+- **Essential Purchases**:
+  - Iron Sword (150g) - critical for mid-game
+  - Chainmail (300g) - greatly improves survivability
+  - Large Healing Potions (50g) - needed for tough battles
+- **Budget**: Expect 20-30 battles to afford mid-tier equipment
+
+## 📊 Monster Database
+
+| Monster | HP | ATK | DEF | XP | Gold | Location | Notes |
+|---------|----|----|-----|-------|------|----------|-------|
+| Slime | 15 | 5 | 2 | 5 | 5g | Forest North | Beginner enemy |
+| Wolf | 25 | 9 | 3 | 10 | 10g | Forest North/South | Fast attacker |
+| Goblin | 30 | 11 | 5 | 15 | 15g | Forest South | Medium difficulty |
+| Bat | 18 | 8 | 2 | 8 | 8g | Mountain | Low HP, fast |
+| Stone Golem | 50 | 14 | 12 | 25 | 25g | Mountain | High defense |
+| **Red Dragon** | 200 | 22 | 15 | 0 | **500g** | Dragon's Lair | BOSS - Fire Breath attack |
+
+## 🗡️ Equipment Database
+
+### Weapons
+| Item | ATK | Cost | Description |
+|------|-----|------|-------------|
+| Wooden Sword | +3 | Starter | Basic training sword |
+| Iron Sword | +8 | 150g | Solid iron blade |
+| Steel Sword | +15 | 500g | Master-crafted weapon |
+
+### Armor
+| Item | DEF | Cost | Description |
+|------|-----|------|-------------|
+| Leather Armor | +2 | Starter | Simple leather protection |
+| Chainmail | +6 | 300g | Interlocking metal rings |
+| Plate Armor | +12 | 800g | Full plate protection |
+
+### Consumables
+| Item | Effect | Cost | Description |
+|------|--------|------|-------------|
+| Healing Potion | +30 HP | 20g | Restores 30 health |
+| Large Healing Potion | +60 HP | 50g | Restores 60 health |
+| Mana Potion | +20 MP | 25g | (Future: Magic system) |
+| Large Mana Potion | +40 MP | 60g | (Future: Magic system) |
+
+## 🏗️ Project Structure
 
 ```
 src/
-├── scenes/           # Phaser scenes (rendering + input)
-│   ├── BootScene.ts       # Asset loading
-│   ├── TitleScene.ts      # Hovedmenu
-│   ├── OverworldScene.ts  # Hoved-gameplay
-│   └── DialogScene.ts     # Dialog overlay
-│
-├── systems/          # Ren spillogik (ingen Phaser)
-│   └── GameState.ts       # Spilstatus og save/load
-│
-├── services/         # Delte services
-│   └── InputService.ts    # Centraliseret input-håndtering
-│
-├── types/            # TypeScript interfaces
-│   └── index.ts
-│
-└── main.ts           # Entry point, Phaser config
+├── data/              # Game data and content
+│   ├── dialogs.ts     # NPC dialog trees
+│   ├── items.ts       # Item database
+│   ├── monsters.ts    # Monster stats and encounters
+│   ├── npcs.ts        # NPC spawn data
+│   └── maps.ts        # World map definitions
+├── scenes/            # Phaser game scenes
+│   ├── BootScene.ts   # Asset loading
+│   ├── TitleScene.ts  # Main menu
+│   ├── OverworldScene.ts  # Exploration
+│   ├── DialogScene.ts     # NPC conversations
+│   ├── CombatScene.ts     # Turn-based battles
+│   ├── MenuScene.ts       # Character menu
+│   ├── ShopScene.ts       # Merchant interface
+│   └── VictoryScene.ts    # End game screen
+├── services/          # Game services
+│   └── InputService.ts    # Keyboard handling
+├── systems/           # Core game systems
+│   ├── CombatSystem.ts    # Damage calculation
+│   ├── EventSystem.ts     # Story flags
+│   ├── GameState.ts       # State management
+│   ├── InventorySystem.ts # Item management
+│   ├── LevelSystem.ts     # XP and leveling
+│   └── LootSystem.ts      # Drop generation
+├── types/             # TypeScript interfaces
+│   └── index.ts       # Type definitions
+└── main.ts            # Game entry point
 ```
 
-## 🔧 Tekniske detaljer
+## 🎨 Technical Details
 
-### InputService - Centraliseret input
+- **Engine**: Phaser 3.87.0
+- **Language**: TypeScript 5.7
+- **Resolution**: 256x224 (SNES standard)
+- **Scaling**: Auto-fit with pixel-perfect rendering
+- **Tile Size**: 16x16 pixels
+- **Grid Movement**: 8-directional with collision
+- **Save System**: Browser localStorage (JSON)
 
-**VIGTIG ARKITEKTUR-BESLUTNING:**
+## 📝 Development Phases
 
-I stedet for at hver scene opretter sine egne key-bindings med `scene.input.keyboard.addKey()`,
-bruger vi en central `InputService` der håndterer al input ét sted.
+### ✅ Phase 1: Core Setup (Complete)
+- Phaser 3 + TypeScript + Vite configuration
+- Basic scene structure
+- Asset loading system
 
-Dette forhindrer et klassisk Phaser-problem hvor scenes "låser" tasterne for hinanden.
+### ✅ Phase 2: Overworld (Complete)
+- Grid-based player movement
+- Collision detection
+- Map transitions
+- Random encounters
 
-**Brug:**
-```typescript
-// I create()
-this.inputService = new InputService(this);
+### ✅ Phase 3: Combat System (Complete)
+- Turn-based battle mechanics
+- Attack/Defend/Item actions
+- Enemy AI (basic/aggressive/boss)
+- Experience and leveling
+- Loot generation
 
-// I update()
-this.inputService.update();
+### ✅ Phase 4: Menus & NPCs (Complete)
+- Inventory/Stats/Equipment menus
+- Save/Load system
+- NPC interaction
+- Dialog system with conditions
+- Shop interface
 
-if (this.inputService.justPressed('action')) {
-  // Handling her
-}
+### ✅ Phase 5: Polish & Balance (Complete)
+- Bug fixes (inventory full, scene transitions)
+- Gold economy balance (added monster gold drops)
+- Victory screen
+- UX improvements
 
-// I shutdown()
-this.inputService.destroy(); // Nulstiller referencerne UDEN at kalde removeKey()
-```
+## 🐛 Known Limitations
 
-### Scene-håndtering
+- **Placeholder Graphics**: Using colored rectangles instead of sprites
+- **No Sound**: Music and sound effects not implemented
+- **Single Quest**: Linear story progression only
+- **No Magic**: Mana system prepared but not implemented
+- **Basic AI**: Monsters use simple attack patterns
 
-**Overlay scenes** (Menu, Dialog) bruger `scene.launch()` og `scene.stop()`:
+## 🔮 Future Enhancement Ideas
 
-```typescript
-// Start overlay
-this.scene.launch('DialogScene');
+- **Real Pixel Art**: Replace placeholders with proper 16x16 sprites
+- **More Content**:
+  - Additional maps (caves, castles, towns)
+  - More monster varieties
+  - Side quests and optional bosses
+- **Skills & Magic**: Implement mana-based abilities
+- **Animations**: Attack effects, damage numbers, spell animations
+- **Music & SFX**: Chiptune soundtrack and retro sound effects
+- **Party System**: Recruit companions to fight alongside you
+- **Crafting**: Combine materials to create items
+- **Achievements**: Track player accomplishments
 
-// Stop overlay (IKKE pause/resume!)
-this.scene.stop('DialogScene');
-```
+## 📜 Changelog
 
-Dette er sikrere end pause/resume og forhindrer input-problemer.
+### Version 1.0.0 (Phase 5 Complete)
+- ✅ All core systems implemented
+- ✅ NPC interaction and dialog system
+- ✅ Save/Load functionality
+- ✅ Victory screen with statistics
+- ✅ Balanced economy with monster gold drops
+- ✅ Bug fixes for inventory and scene transitions
 
-### Grid-baseret bevægelse
+## 👤 Author
 
-Spilleren bevæger sig ét tile (16x16 px) ad gangen med smooth interpolation (150ms).
+Created as a browser-based RPG demo project.
 
-Bevægelse er implementeret som tweens, ikke physics-baseret:
-- Præcis kontrol
-- Ingen floating-point fejl
-- Perfekt til trigger-detektion
+## 📄 License
 
-## 📋 Næste skridt (Fase 2)
+This project is available for educational and portfolio purposes.
 
-- [ ] Implementer CombatSystem
-- [ ] Implementer CombatScene
-- [ ] Implementer encounter-system
-- [ ] Implementer fjende-AI
-- [ ] Test komplet kamp fra start til slut
+---
 
-## 🐛 Debugging
-
-TypeScript type-check uden at bygge:
-```bash
-npx tsc --noEmit
-```
-
-## 📝 Noter
-
-- **Pixel-perfect**: Alle assets skal være 16x16 px eller multipler heraf
-- **Farvepalette**: Brug en begrænset 32-color palette (SNES-stil)
-- **No scope creep**: Følg implementeringsplanen strengt
-
-## 📄 Licens
-
-Dette er et læringsprojekt. Brug frit til inspiration.
+**Enjoy your adventure in Skovens Helte!** 🌲⚔️🐉
