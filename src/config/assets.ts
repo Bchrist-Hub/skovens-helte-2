@@ -25,20 +25,20 @@ export interface ImageConfig {
 
 /**
  * Player sprite configuration
- * Player sprites are 48x64 pixels per frame (192x320 total = 4 columns x 5 rows)
+ * Player sprites are 64x64 pixels per frame (192x320 total = 3 columns x 5 rows)
  * Layout: Row 0=Down, Row 1=Up, Row 2=Left, Row 3=Right, Row 4=Extra
  */
 export const PLAYER_SPRITES: SpriteConfig[] = [
   {
     key: 'player',
     path: `${ASSET_BASE_PATH}/Player/Player.png`,
-    frameWidth: 48,
+    frameWidth: 64,
     frameHeight: 64
   },
   {
     key: 'player_actions',
     path: `${ASSET_BASE_PATH}/Player/Player_Actions.png`,
-    frameWidth: 48,
+    frameWidth: 64,
     frameHeight: 64
   }
 ];
@@ -46,7 +46,7 @@ export const PLAYER_SPRITES: SpriteConfig[] = [
 /**
  * Monster sprite configurations
  * Slime: 512x192 = likely 32x32 frames (16 columns x 6 rows)
- * Skeleton: 192x320 = 48x64 frames (4 columns x 5 rows), same as player
+ * Skeleton: 192x320 = 64x64 frames (3 columns x 5 rows), same as player
  */
 export const MONSTER_SPRITES: SpriteConfig[] = [
   {
@@ -58,7 +58,7 @@ export const MONSTER_SPRITES: SpriteConfig[] = [
   {
     key: 'skeleton',
     path: `${ASSET_BASE_PATH}/Enemies/Skeleton.png`,
-    frameWidth: 48,
+    frameWidth: 64,
     frameHeight: 64
   }
 ];
