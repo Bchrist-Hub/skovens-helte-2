@@ -71,8 +71,8 @@ export class OverworldScene extends Phaser.Scene {
     );
     this.player.setOrigin(0, 0);
     this.player.setDepth(10); // Above tiles
-    // Scale 96x160 sprite down (0.25x = 24x40 pixels)
-    this.player.setScale(0.25);
+    // 32x32 sprites at 0.5x scale = 16x16 (fits tile grid perfectly)
+    this.player.setScale(0.5);
     this.player.play('player_idle_down'); // Start with idle animation
 
     // Spawn NPCs for current map
@@ -179,6 +179,13 @@ export class OverworldScene extends Phaser.Scene {
    */
   private moveToTile(gridX: number, gridY: number, direction: Direction): void {
     this.isMoving = true;
+
+    // Handle flipX for left/right directions
+    if (direction === 'left') {
+      this.player.setFlipX(true);
+    } else if (direction === 'right') {
+      this.player.setFlipX(false);
+    }
 
     // Play walking animation based on direction
     const walkAnimKey = `player_walk_${direction}`;
@@ -398,8 +405,8 @@ export class OverworldScene extends Phaser.Scene {
       );
       sprite.setOrigin(0, 0);
       sprite.setDepth(9); // Just below player
-      // Scale 96x160 sprite down to 24x40 (0.25x)
-      sprite.setScale(0.25);
+      // 32x32 sprites at 0.5x scale = 16x16
+      sprite.setScale(0.5);
 
       // Different tints for different NPCs to distinguish them
       const npcTints: Record<string, number> = {

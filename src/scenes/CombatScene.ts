@@ -417,9 +417,8 @@ export class CombatScene extends Phaser.Scene {
       sprite.setOrigin(0.5);
 
       // Scale appropriately for combat
-      // Slime (128x96) -> scale 0.5x = 64x48
-      // Skeleton (96x160) -> scale 0.5x = 48x80
-      const baseScale = 0.5;
+      // Both 32x32 sprites -> scale 2x = 64x64 (good visibility)
+      const baseScale = 2.0;
       sprite.setScale(baseScale);
 
       // Apply monster-specific tint if available
