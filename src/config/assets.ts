@@ -25,41 +25,41 @@ export interface ImageConfig {
 
 /**
  * Player sprite configuration
- * Player sprites are 64x64 pixels per frame (192x320 total = 3 columns x 5 rows)
- * Layout: Row 0=Down, Row 1=Up, Row 2=Left, Row 3=Right, Row 4=Extra
+ * Player sprites are 96x160 pixels per frame (192x320 total = 2 columns x 2 rows)
+ * Each frame shows a complete character pose
  */
 export const PLAYER_SPRITES: SpriteConfig[] = [
   {
     key: 'player',
     path: `${ASSET_BASE_PATH}/Player/Player.png`,
-    frameWidth: 64,
-    frameHeight: 64
+    frameWidth: 96,
+    frameHeight: 160
   },
   {
     key: 'player_actions',
     path: `${ASSET_BASE_PATH}/Player/Player_Actions.png`,
-    frameWidth: 64,
-    frameHeight: 64
+    frameWidth: 96,
+    frameHeight: 160
   }
 ];
 
 /**
  * Monster sprite configurations
- * Slime: 512x192 = likely 32x32 frames (16 columns x 6 rows)
- * Skeleton: 192x320 = 64x64 frames (3 columns x 5 rows), same as player
+ * Slime: 512x192 = 128x96 frames (4 columns x 2 rows)
+ * Skeleton: 192x320 = 96x160 frames (2 columns x 2 rows), same as player
  */
 export const MONSTER_SPRITES: SpriteConfig[] = [
   {
     key: 'slime_green',
     path: `${ASSET_BASE_PATH}/Enemies/Slime_Green.png`,
-    frameWidth: 32,
-    frameHeight: 32
+    frameWidth: 128,
+    frameHeight: 96
   },
   {
     key: 'skeleton',
     path: `${ASSET_BASE_PATH}/Enemies/Skeleton.png`,
-    frameWidth: 64,
-    frameHeight: 64
+    frameWidth: 96,
+    frameHeight: 160
   }
 ];
 
@@ -133,6 +133,8 @@ export interface AnimConfig {
 
 /**
  * Player animations
+ * With 96x160 frames (2 columns x 2 rows = 4 total frames)
+ * Using simple 2-frame animations for walk cycles
  */
 export const PLAYER_ANIMS: AnimConfig[] = [
   {
@@ -145,50 +147,50 @@ export const PLAYER_ANIMS: AnimConfig[] = [
   {
     key: 'player_walk_down',
     spriteKey: 'player',
-    frames: [0, 1, 2, 3],
-    frameRate: 8,
+    frames: [0, 1],
+    frameRate: 6,
     repeat: -1
   },
   {
     key: 'player_idle_up',
     spriteKey: 'player',
-    frames: [4],
+    frames: [2],
     frameRate: 1,
     repeat: -1
   },
   {
     key: 'player_walk_up',
     spriteKey: 'player',
-    frames: [4, 5, 6, 7],
-    frameRate: 8,
+    frames: [2, 3],
+    frameRate: 6,
     repeat: -1
   },
   {
     key: 'player_idle_right',
     spriteKey: 'player',
-    frames: [8],
+    frames: [1],
     frameRate: 1,
     repeat: -1
   },
   {
     key: 'player_walk_right',
     spriteKey: 'player',
-    frames: [8, 9, 10, 11],
-    frameRate: 8,
+    frames: [1, 0],
+    frameRate: 6,
     repeat: -1
   },
   {
     key: 'player_idle_left',
     spriteKey: 'player',
-    frames: [12],
+    frames: [3],
     frameRate: 1,
     repeat: -1
   },
   {
     key: 'player_walk_left',
     spriteKey: 'player',
-    frames: [12, 13, 14, 15],
-    frameRate: 8,
+    frames: [3, 2],
+    frameRate: 6,
     repeat: -1
   }
 ];

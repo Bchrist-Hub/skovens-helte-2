@@ -71,8 +71,8 @@ export class OverworldScene extends Phaser.Scene {
     );
     this.player.setOrigin(0, 0);
     this.player.setDepth(10); // Above tiles
-    // Scale 64x64 sprite down to fit 16x16 tile (or use 0.375 for 24x24)
-    this.player.setScale(0.375); // 64 * 0.375 = 24px
+    // Scale 96x160 sprite down (0.25x = 24x40 pixels)
+    this.player.setScale(0.25);
     this.player.play('player_idle_down'); // Start with idle animation
 
     // Spawn NPCs for current map
@@ -398,8 +398,8 @@ export class OverworldScene extends Phaser.Scene {
       );
       sprite.setOrigin(0, 0);
       sprite.setDepth(9); // Just below player
-      // Scale 64x64 sprite down to 24x24 (0.375x)
-      sprite.setScale(0.375);
+      // Scale 96x160 sprite down to 24x40 (0.25x)
+      sprite.setScale(0.25);
 
       // Different tints for different NPCs to distinguish them
       const npcTints: Record<string, number> = {
