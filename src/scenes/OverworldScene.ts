@@ -347,8 +347,11 @@ export class OverworldScene extends Phaser.Scene {
       this.tilemap.push(row);
     }
 
-    // Make sure spawn point is clear
-    this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+    // Make sure spawn point is clear (only if within bounds)
+    if (this.playerGridY >= 0 && this.playerGridY < this.MAP_HEIGHT &&
+        this.playerGridX >= 0 && this.playerGridX < this.MAP_WIDTH) {
+      this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+    }
 
     // Place some cliff obstacles
     this.placeCliff(4, 3, 'large');
@@ -423,8 +426,9 @@ export class OverworldScene extends Phaser.Scene {
       this.tilemap.push(row);
     }
 
-    // Make sure spawn point is clear
-    if (this.playerGridY < this.MAP_HEIGHT && this.playerGridX < this.MAP_WIDTH) {
+    // Make sure spawn point is clear (only if within bounds)
+    if (this.playerGridY >= 0 && this.playerGridY < this.MAP_HEIGHT &&
+        this.playerGridX >= 0 && this.playerGridX < this.MAP_WIDTH) {
       this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
     }
 
