@@ -41,6 +41,26 @@ export const ITEMS: Record<string, Item> = {
     }
   },
 
+  bow: {
+    id: 'bow',
+    name: 'Bue',
+    type: 'weapon',
+    description: 'En simpel træbue til jagt og kamp.',
+    stats: {
+      atk: 5
+    }
+  },
+
+  axe: {
+    id: 'axe',
+    name: 'Økse',
+    type: 'weapon',
+    description: 'En tung kampøkse. Langsom men kraftfuld.',
+    stats: {
+      atk: 6
+    }
+  },
+
   // ============================================================================
   // RUSTNING
   // ============================================================================
@@ -67,11 +87,31 @@ export const ITEMS: Record<string, Item> = {
 
   dragon_scale_armor: {
     id: 'dragon_scale_armor',
-    name: 'Drageskaelrustning',
+    name: 'Drage skælrustning',
     type: 'armor',
-    description: 'Rustning lavet af drageskaæl. Utrolig beskyttelse.',
+    description: 'Rustning lavet af drageskæl. Utrolig beskyttelse.',
     stats: {
       def: 12
+    }
+  },
+
+  wooden_shield: {
+    id: 'wooden_shield',
+    name: 'Træskjold',
+    type: 'shield',
+    description: 'Et simpelt skjold af massivt træ.',
+    stats: {
+      def: 2
+    }
+  },
+
+  iron_shield: {
+    id: 'iron_shield',
+    name: 'Jernskjold',
+    type: 'shield',
+    description: 'Et tungt skjold af solidt jern.',
+    stats: {
+      def: 5
     }
   },
 
@@ -79,14 +119,25 @@ export const ITEMS: Record<string, Item> = {
   // CONSUMABLES
   // ============================================================================
 
+  small_healing_potion: {
+    id: 'small_healing_potion',
+    name: 'Lille Helbredelsesdrik',
+    type: 'consumable',
+    description: 'Gendan 20 HP.',
+    effect: {
+      type: 'heal_hp',
+      value: 20
+    }
+  },
+
   healing_potion: {
     id: 'healing_potion',
     name: 'Helbredelsesdrik',
     type: 'consumable',
-    description: 'Gendan 30 HP.',
+    description: 'Gendan 40 HP.',
     effect: {
       type: 'heal_hp',
-      value: 30
+      value: 40
     }
   },
 
@@ -94,10 +145,10 @@ export const ITEMS: Record<string, Item> = {
     id: 'large_healing_potion',
     name: 'Stor Helbredelsesdrik',
     type: 'consumable',
-    description: 'Gendan 80 HP.',
+    description: 'Gendan 70 HP.',
     effect: {
       type: 'heal_hp',
-      value: 80
+      value: 70
     }
   },
 
@@ -123,7 +174,7 @@ export function getItem(itemId: string): Item | null {
 /**
  * Få alle items af en specifik type
  */
-export function getItemsByType(type: 'weapon' | 'armor' | 'consumable'): Item[] {
+export function getItemsByType(type: 'weapon' | 'armor' | 'shield' | 'consumable'): Item[] {
   return Object.values(ITEMS).filter(item => item.type === type);
 }
 

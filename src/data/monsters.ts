@@ -147,17 +147,44 @@ export const MONSTERS: Record<string, Omit<Monster, 'currentHP'>> = {
 
 /**
  * Skab en monster-instans fra template
+ * Scaler stats baseret på spillerens level for at holde spillet udfordrende
  */
-export function createMonster(monsterId: string): Monster {
+export function createMonster(monsterId: string, playerLevel: number = 1): Monster {
   const template = MONSTERS[monsterId];
 
   if (!template) {
     throw new Error(`Monster not found: ${monsterId}`);
   }
 
+  // Don't scale boss monsters - they have fixed stats
+  if (template.aiType === 'boss') {
+    return {
+      ...template,
+      currentHP: template.stats.maxHP
+    };
+  }
+
+  // Scale stats based on player level
+  // Level 1 = 100% base stats
+  // Each level adds +12% HP, +10% ATK, +10% DEF
+  const levelDiff = playerLevel - 1;
+  const hpScale = 1 + (levelDiff * 0.12);
+  const atkScale = 1 + (levelDiff * 0.10);
+  const defScale = 1 + (levelDiff * 0.10);
+  const rewardScale = 1 + (levelDiff * 0.15); // XP and gold scale faster
+
+  const scaledStats = {
+    maxHP: Math.floor(template.stats.maxHP * hpScale),
+    atk: Math.floor(template.stats.atk * atkScale),
+    def: Math.floor(template.stats.def * defScale)
+  };
+
   return {
     ...template,
-    currentHP: template.stats.maxHP
+    stats: scaledStats,
+    currentHP: scaledStats.maxHP,
+    xpReward: Math.floor(template.xpReward * rewardScale),
+    goldReward: Math.floor(template.goldReward * rewardScale)
   };
 }
 
@@ -206,8 +233,9 @@ export const ENCOUNTER_TABLES: Record<string, EncounterTable> = {
 
 /**
  * Generer en tilfældig encounter fra en tabel
+ * Scaler monsters til spillerens level
  */
-export function generateEncounter(tableId: string): Monster[] {
+export function generateEncounter(tableId: string, playerLevel: number = 1): Monster[] {
   const table = ENCOUNTER_TABLES[tableId];
 
   if (!table) {
@@ -229,7 +257,7 @@ export function generateEncounter(tableId: string): Monster[] {
     for (const entry of table.monsters) {
       random -= entry.weight;
       if (random <= 0) {
-        monsters.push(createMonster(entry.id));
+        monsters.push(createMonster(entry.id, playerLevel));
         break;
       }
     }

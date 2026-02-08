@@ -50,6 +50,9 @@ export class OverworldScene extends Phaser.Scene {
   // Debug
   private coordinateText!: Phaser.GameObjects.Text;
 
+  // Play time tracking
+  private accumulatedTime: number = 0; // Milliseconds accumulated
+
   // Cliff data (stored separately for proper rendering)
   private cliffs: Array<{ x: number; y: number; size: 'large' | 'small' }> = [];
 
@@ -122,6 +125,17 @@ export class OverworldScene extends Phaser.Scene {
     this.inputService.update();
     this.updateCoordinateDisplay();
 
+    // Track play time (increment every second)
+    const delta = this.game.loop.delta; // Milliseconds since last frame
+    this.accumulatedTime += delta;
+
+    if (this.accumulatedTime >= 1000) {
+      // Increment play time by 1 second
+      const state = this.gameState.getState();
+      state.playTime += 1;
+      this.accumulatedTime -= 1000; // Keep remainder for precision
+    }
+
     // DEBUG: Test boss fight (press D for dragon)
     const keyD = this.input.keyboard?.addKey('D');
     if (keyD && Phaser.Input.Keyboard.JustDown(keyD)) {
@@ -147,7 +161,15 @@ export class OverworldScene extends Phaser.Scene {
     if (this.inputService.justPressed('cancel') || this.inputService.justPressed('menu')) {
       // Check if MenuScene is not already running
       if (!this.scene.isActive('MenuScene')) {
-        this.scene.launch('MenuScene');
+        // Pause OverworldScene to prevent movement during menu
+        this.scene.pause();
+
+        this.scene.launch('MenuScene', {
+          onComplete: () => {
+            // Resume OverworldScene after menu closes
+            this.scene.resume();
+          }
+        });
       }
       return;
     }
@@ -319,6 +341,24 @@ export class OverworldScene extends Phaser.Scene {
       case 'village_outskirts':
         this.createVillageOutskirtsMap();
         break;
+      case 'forest_path':
+        this.createForestPathMap();
+        break;
+      case 'dark_forest':
+        this.createDarkForestMap();
+        break;
+      case 'mountain_path':
+        this.createMountainPathMap();
+        break;
+      case 'mountain_cave':
+        this.createMountainCaveMap();
+        break;
+      case 'dragon_lair_entrance':
+        this.createDragonLairEntranceMap();
+        break;
+      case 'dragon_arena':
+        this.createDragonArenaMap();
+        break;
       case 'village':
       default:
         this.createVillageMap();
@@ -417,7 +457,7 @@ export class OverworldScene extends Phaser.Scene {
       y: 7,
       targetMap: 'house_interior',
       targetX: 10,
-      targetY: 11
+      targetY: 13
     });
 
     // Blacksmith door
@@ -514,14 +554,95 @@ export class OverworldScene extends Phaser.Scene {
       targetY: 1
     });
 
-    // North exit to Forest Path (not implemented yet, but set up)
-    // this.mapTransitions.push({
-    //   x: 12,
-    //   y: 0,
-    //   targetMap: 'forest_path',
-    //   targetX: 15,
-    //   targetY: 18
-    // });
+    // North exit to Forest Path
+    this.mapTransitions.push({
+      x: 12,
+      y: 0,
+      targetMap: 'forest_path',
+      targetX: 15,
+      targetY: 18
+    });
+  }
+
+  /**
+   * Create forest path map
+   */
+  private createForestPathMap(): void {
+    this.MAP_WIDTH = 30;
+    this.MAP_HEIGHT = 20;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Create walls around edges (except south to outskirts, north to dark forest)
+        if (x === 0 || x === this.MAP_WIDTH - 1) {
+          row.push(this.TILE_WALL);
+        } else if (y === 0) {
+          // North edge - open path to dark forest (future)
+          if (x === 15) {
+            row.push(this.TILE_GROUND); // Open path north
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else if (y === this.MAP_HEIGHT - 1) {
+          // South edge - open path back to village outskirts
+          if (x === 15) {
+            row.push(this.TILE_GROUND); // Open path south
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Make sure spawn point is clear
+    if (this.playerGridY >= 0 && this.playerGridY < this.MAP_HEIGHT &&
+        this.playerGridX >= 0 && this.playerGridX < this.MAP_WIDTH) {
+      this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+    }
+
+    // Create a winding path with obstacles (cliffs) on both sides
+    // Left side obstacles
+    this.placeCliff(3, 3, 'large');
+    this.placeCliff(2, 7, 'small');
+    this.placeCliff(4, 11, 'large');
+    this.placeCliff(3, 15, 'small');
+
+    // Right side obstacles
+    this.placeCliff(24, 2, 'small');
+    this.placeCliff(25, 6, 'large');
+    this.placeCliff(23, 10, 'small');
+    this.placeCliff(24, 14, 'large');
+
+    // Center path obstacles to create winding effect
+    this.placeCliff(10, 5, 'small');
+    this.placeCliff(18, 8, 'small');
+    this.placeCliff(12, 12, 'large');
+    this.placeCliff(20, 15, 'small');
+
+    // South exit back to Village Outskirts
+    this.mapTransitions.push({
+      x: 15,
+      y: this.MAP_HEIGHT - 1,
+      targetMap: 'village_outskirts',
+      targetX: 12,
+      targetY: 1
+    });
+
+    // North exit to Dark Forest
+    this.mapTransitions.push({
+      x: 15,
+      y: 0,
+      targetMap: 'dark_forest',
+      targetX: 12,
+      targetY: 23
+    });
   }
 
   /**
@@ -657,6 +778,363 @@ export class OverworldScene extends Phaser.Scene {
       targetMap: 'village',
       targetX: 10,
       targetY: 6
+    });
+  }
+
+  /**
+   * Create dark forest map (dangerous area with goblins)
+   */
+  private createDarkForestMap(): void {
+    this.MAP_WIDTH = 25;
+    this.MAP_HEIGHT = 25;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Create walls around edges (except south to forest_path, north to mountain_path)
+        if (x === 0 || x === this.MAP_WIDTH - 1) {
+          row.push(this.TILE_WALL);
+        } else if (y === 0) {
+          // North edge - open path to mountain
+          if (x === 12) {
+            row.push(this.TILE_GROUND);
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else if (y === this.MAP_HEIGHT - 1) {
+          // South edge - open path back to forest_path
+          if (x === 12) {
+            row.push(this.TILE_GROUND);
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Make sure spawn point is clear
+    if (this.playerGridY >= 0 && this.playerGridY < this.MAP_HEIGHT &&
+        this.playerGridX >= 0 && this.playerGridX < this.MAP_WIDTH) {
+      this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+    }
+
+    // Dense forest obstacles
+    this.placeCliff(3, 3, 'large');
+    this.placeCliff(8, 5, 'small');
+    this.placeCliff(15, 4, 'large');
+    this.placeCliff(20, 6, 'small');
+    this.placeCliff(5, 10, 'small');
+    this.placeCliff(11, 9, 'large');
+    this.placeCliff(18, 11, 'small');
+    this.placeCliff(4, 15, 'large');
+    this.placeCliff(13, 16, 'small');
+    this.placeCliff(19, 18, 'large');
+    this.placeCliff(7, 20, 'small');
+
+    // South exit back to Forest Path
+    this.mapTransitions.push({
+      x: 12,
+      y: this.MAP_HEIGHT - 1,
+      targetMap: 'forest_path',
+      targetX: 15,
+      targetY: 1
+    });
+
+    // North exit to Mountain Path
+    this.mapTransitions.push({
+      x: 12,
+      y: 0,
+      targetMap: 'mountain_path',
+      targetX: 15,
+      targetY: 18
+    });
+  }
+
+  /**
+   * Create mountain path map (rocky transition to mountain)
+   */
+  private createMountainPathMap(): void {
+    this.MAP_WIDTH = 30;
+    this.MAP_HEIGHT = 20;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Create walls around edges (except south to dark_forest, north to cave)
+        if (x === 0 || x === this.MAP_WIDTH - 1) {
+          row.push(this.TILE_WALL);
+        } else if (y === 0) {
+          // North edge - open path to cave
+          if (x >= 14 && x <= 16) {
+            row.push(this.TILE_GROUND);
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else if (y === this.MAP_HEIGHT - 1) {
+          // South edge - open path back to dark forest
+          if (x === 15) {
+            row.push(this.TILE_GROUND);
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Make sure spawn point is clear
+    if (this.playerGridY >= 0 && this.playerGridY < this.MAP_HEIGHT &&
+        this.playerGridX >= 0 && this.playerGridX < this.MAP_WIDTH) {
+      this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+    }
+
+    // Rocky mountain terrain with many cliffs
+    this.placeCliff(2, 2, 'large');
+    this.placeCliff(7, 3, 'small');
+    this.placeCliff(12, 2, 'large');
+    this.placeCliff(20, 3, 'small');
+    this.placeCliff(25, 2, 'large');
+    this.placeCliff(4, 7, 'small');
+    this.placeCliff(10, 8, 'large');
+    this.placeCliff(17, 7, 'small');
+    this.placeCliff(22, 8, 'large');
+    this.placeCliff(3, 12, 'large');
+    this.placeCliff(9, 13, 'small');
+    this.placeCliff(15, 12, 'large');
+    this.placeCliff(21, 14, 'small');
+    this.placeCliff(26, 13, 'large');
+
+    // South exit back to Dark Forest
+    this.mapTransitions.push({
+      x: 15,
+      y: this.MAP_HEIGHT - 1,
+      targetMap: 'dark_forest',
+      targetX: 12,
+      targetY: 1
+    });
+
+    // North exit to Mountain Cave
+    this.mapTransitions.push({
+      x: 15,
+      y: 0,
+      targetMap: 'mountain_cave',
+      targetX: 12,
+      targetY: 23
+    });
+  }
+
+  /**
+   * Create mountain cave map (dark cave interior)
+   */
+  private createMountainCaveMap(): void {
+    this.MAP_WIDTH = 25;
+    this.MAP_HEIGHT = 25;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Create walls around edges (except south to mountain_path, north to dragon's lair)
+        if (x === 0 || x === this.MAP_WIDTH - 1) {
+          row.push(this.TILE_WALL);
+        } else if (y === 0) {
+          // North edge - open path to dragon's lair
+          if (x === 12) {
+            row.push(this.TILE_GROUND);
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else if (y === this.MAP_HEIGHT - 1) {
+          // South edge - open path back to mountain path
+          if (x === 12) {
+            row.push(this.TILE_GROUND);
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Make sure spawn point is clear
+    if (this.playerGridY >= 0 && this.playerGridY < this.MAP_HEIGHT &&
+        this.playerGridX >= 0 && this.playerGridX < this.MAP_WIDTH) {
+      this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+    }
+
+    // Cave obstacles - stalagmites and rock formations
+    this.placeCliff(3, 4, 'large');
+    this.placeCliff(9, 3, 'small');
+    this.placeCliff(16, 5, 'large');
+    this.placeCliff(21, 4, 'small');
+    this.placeCliff(5, 9, 'small');
+    this.placeCliff(12, 10, 'large');
+    this.placeCliff(19, 9, 'small');
+    this.placeCliff(3, 14, 'large');
+    this.placeCliff(10, 15, 'small');
+    this.placeCliff(17, 14, 'large');
+    this.placeCliff(5, 19, 'small');
+    this.placeCliff(14, 20, 'large');
+    this.placeCliff(20, 19, 'small');
+
+    // South exit back to Mountain Path
+    this.mapTransitions.push({
+      x: 12,
+      y: this.MAP_HEIGHT - 1,
+      targetMap: 'mountain_path',
+      targetX: 15,
+      targetY: 1
+    });
+
+    // North exit to Dragon's Lair Entrance
+    this.mapTransitions.push({
+      x: 12,
+      y: 0,
+      targetMap: 'dragon_lair_entrance',
+      targetX: 15,
+      targetY: 23
+    });
+  }
+
+  /**
+   * Create dragon's lair entrance map
+   */
+  private createDragonLairEntranceMap(): void {
+    this.MAP_WIDTH = 30;
+    this.MAP_HEIGHT = 25;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Create walls around edges (except south to cave, north to dragon arena)
+        if (x === 0 || x === this.MAP_WIDTH - 1) {
+          row.push(this.TILE_WALL);
+        } else if (y === 0) {
+          // North edge - open path to dragon arena (wide entrance)
+          if (x >= 13 && x <= 17) {
+            row.push(this.TILE_GROUND);
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else if (y === this.MAP_HEIGHT - 1) {
+          // South edge - open path back to mountain cave
+          if (x === 15) {
+            row.push(this.TILE_GROUND);
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Make sure spawn point is clear
+    if (this.playerGridY >= 0 && this.playerGridY < this.MAP_HEIGHT &&
+        this.playerGridX >= 0 && this.playerGridX < this.MAP_WIDTH) {
+      this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+    }
+
+    // Large rocky formations leading to dragon's lair
+    this.placeCliff(3, 5, 'large');
+    this.placeCliff(10, 6, 'large');
+    this.placeCliff(24, 5, 'large');
+    this.placeCliff(5, 10, 'large');
+    this.placeCliff(17, 11, 'large');
+    this.placeCliff(25, 12, 'large');
+    this.placeCliff(8, 16, 'large');
+    this.placeCliff(20, 17, 'large');
+    this.placeCliff(4, 20, 'large');
+    this.placeCliff(13, 19, 'small');
+    this.placeCliff(26, 21, 'large');
+
+    // South exit back to Mountain Cave
+    this.mapTransitions.push({
+      x: 15,
+      y: this.MAP_HEIGHT - 1,
+      targetMap: 'mountain_cave',
+      targetX: 12,
+      targetY: 1
+    });
+
+    // North exit to Dragon Arena
+    this.mapTransitions.push({
+      x: 15,
+      y: 0,
+      targetMap: 'dragon_arena',
+      targetX: 10,
+      targetY: 18
+    });
+  }
+
+  /**
+   * Create dragon arena map (final boss)
+   */
+  private createDragonArenaMap(): void {
+    this.MAP_WIDTH = 20;
+    this.MAP_HEIGHT = 20;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Create walls around edges (except south exit)
+        if (x === 0 || x === this.MAP_WIDTH - 1 || y === 0) {
+          row.push(this.TILE_WALL);
+        } else if (y === this.MAP_HEIGHT - 1) {
+          // South edge - open path back to lair entrance
+          if (x >= 9 && x <= 11) {
+            row.push(this.TILE_GROUND);
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Make sure spawn point is clear
+    if (this.playerGridY >= 0 && this.playerGridY < this.MAP_HEIGHT &&
+        this.playerGridX >= 0 && this.playerGridX < this.MAP_WIDTH) {
+      this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+    }
+
+    // Minimal obstacles - large open arena for boss fight
+    this.placeCliff(3, 5, 'small');
+    this.placeCliff(15, 5, 'small');
+    this.placeCliff(3, 13, 'small');
+    this.placeCliff(15, 13, 'small');
+
+    // South exit back to Dragon's Lair Entrance
+    this.mapTransitions.push({
+      x: 10,
+      y: this.MAP_HEIGHT - 1,
+      targetMap: 'dragon_lair_entrance',
+      targetX: 15,
+      targetY: 1
     });
   }
 
@@ -860,6 +1338,9 @@ export class OverworldScene extends Phaser.Scene {
         this.gameState.getState().currentMap = transition.targetMap;
         this.gameState.setPlayerPosition(transition.targetX, transition.targetY);
 
+        // Reset encounter counter to prevent immediate encounters on new map
+        this.gameState.resetEncounterSteps();
+
         // Restart the scene to load new map
         this.scene.restart();
       });
@@ -874,16 +1355,18 @@ export class OverworldScene extends Phaser.Scene {
 
     // Define which maps have encounters and their encounter table IDs
     const encounterMaps: Record<string, string> = {
-      'village_outskirts': 'forest_north', // Slimes and Wolves (10% rate)
-      // Future maps:
-      // 'forest_path': 'forest_north',
-      // 'dark_forest': 'forest_south',
-      // 'dragons_lair_entrance': 'mountain'
+      'village_outskirts': 'forest_north',  // Slimes and Wolves
+      'forest_path': 'forest_north',        // Slimes and Wolves
+      'dark_forest': 'forest_south',        // Wolves and Goblins
+      'mountain_path': 'mountain',          // Bats and Stone Golems
+      'mountain_cave': 'mountain',          // Bats and Stone Golems
+      'dragon_lair_entrance': 'mountain'    // Bats and Stone Golems
+      // 'dragon_arena' has no random encounters - boss only
     };
 
     // Only check for encounters on maps with encounter zones
     if (!encounterMaps[currentMap]) {
-      return; // No encounters on this map (village, interiors, etc.)
+      return; // No encounters on this map (village, interiors, dragon_arena, etc.)
     }
 
     const encounterSteps = this.gameState.getState().encounterSteps;
@@ -919,8 +1402,9 @@ export class OverworldScene extends Phaser.Scene {
       encounterTableId = currentMap === 'village_outskirts' ? 'forest_north' : 'forest_north';
     }
 
-    // Generate enemies from encounter table
-    const enemies = generateEncounter(encounterTableId);
+    // Generate enemies from encounter table (scaled to player level)
+    const playerLevel = this.gameState.getPlayer().level;
+    const enemies = generateEncounter(encounterTableId, playerLevel);
 
     // Pause OverworldScene (men stop den ikke - vi kommer tilbage)
     this.scene.pause();
@@ -935,8 +1419,8 @@ export class OverworldScene extends Phaser.Scene {
   private startBossFight(): void {
     console.log('DEBUG: Boss fight started!');
 
-    // Create dragon
-    const dragon = createMonster('red_dragon');
+    // Create dragon (boss doesn't scale with player level)
+    const dragon = createMonster('red_dragon', this.gameState.getPlayer().level);
 
     // Pause OverworldScene
     this.scene.pause();
@@ -1110,7 +1594,16 @@ export class OverworldScene extends Phaser.Scene {
     if (npc.shopId) {
       const shop = getShop(npc.shopId);
       if (shop) {
-        this.scene.launch('ShopScene', { shop });
+        // Pause OverworldScene to prevent menu opening when ESC is pressed
+        this.scene.pause();
+
+        this.scene.launch('ShopScene', {
+          shop,
+          onComplete: () => {
+            // Resume OverworldScene after shop closes
+            this.scene.resume();
+          }
+        });
         return;
       }
     }

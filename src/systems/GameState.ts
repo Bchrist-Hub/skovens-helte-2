@@ -108,7 +108,8 @@ export class GameStateManager {
       currentMP: 15,
       equipment: {
         weapon: null,
-        armor: null
+        armor: null,
+        shield: null
       }
     };
 

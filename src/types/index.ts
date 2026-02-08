@@ -18,13 +18,14 @@ export interface Player {
   equipment: {
     weapon: Item | null;
     armor: Item | null;
+    shield: Item | null;
   };
 }
 
 export interface Item {
   id: string;
   name: string;
-  type: 'weapon' | 'armor' | 'consumable';
+  type: 'weapon' | 'armor' | 'shield' | 'consumable';
   description: string;
   stats?: {
     atk?: number;

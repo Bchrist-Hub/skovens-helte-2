@@ -29,6 +29,7 @@ export class DialogScene extends Phaser.Scene {
   private speakerText!: Phaser.GameObjects.Text;
   private dialogText!: Phaser.GameObjects.Text;
   private continueIcon!: Phaser.GameObjects.Text;
+  private choiceBoxGraphics?: Phaser.GameObjects.Graphics;
   private choiceTexts: Phaser.GameObjects.Text[] = [];
 
   // Typewriter
@@ -182,12 +183,24 @@ export class DialogScene extends Phaser.Scene {
 
     switch (action) {
       case 'rest':
-        // Rest at inn - heal to full HP
+        // Rest at inn - heal to full HP/MP
         if (cost && gold >= cost) {
           player.currentHP = player.baseStats.maxHP;
           player.currentMP = player.baseStats.maxMP;
           this.gameState.addGold(-cost);
           console.log(`Rested at inn. HP/MP restored. Paid ${cost}g.`);
+        } else {
+          // Not enough gold - show error dialog
+          console.log(`Cannot afford rest. Need ${cost}g, have ${gold}g.`);
+          const errorDialog: DialogEntry = {
+            id: 'innkeeper_no_gold',
+            speaker: 'Kromand',
+            lines: ['Du har ikke nok guld! Kom tilbage når du har 50 guld.']
+          };
+          this.currentDialog = errorDialog;
+          this.currentLineIndex = 0;
+          this.showCurrentLine();
+          return; // Don't proceed to nextDialog
         }
         break;
 
@@ -216,7 +229,7 @@ export class DialogScene extends Phaser.Scene {
 
     // Dialog box dimensions
     const boxWidth = width - 20;
-    const boxHeight = 60;
+    const boxHeight = 80; // Increased from 60 to accommodate wrapped text
     const boxX = 10;
     const boxY = height - boxHeight - 10;
 
@@ -313,17 +326,14 @@ export class DialogScene extends Phaser.Scene {
     const choiceBoxWidth = width - 20;
     const choiceBoxHeight = Math.min(60, choices.length * 16 + 16); // Dynamic height based on choice count
     const choiceBoxX = 10;
-    const choiceBoxY = height - 70 - choiceBoxHeight - 10; // Above the main dialog box
+    const choiceBoxY = height - 90 - choiceBoxHeight - 10; // Above the main dialog box (updated for taller dialog box)
 
     // Draw choice box background
-    const choiceBox = this.add.graphics();
-    choiceBox.fillStyle(0x1a1a40, 0.95); // Slightly lighter than dialog box
-    choiceBox.fillRect(choiceBoxX, choiceBoxY, choiceBoxWidth, choiceBoxHeight);
-    choiceBox.lineStyle(2, 0xffff00, 1); // Yellow border to highlight choices
-    choiceBox.strokeRect(choiceBoxX, choiceBoxY, choiceBoxWidth, choiceBoxHeight);
-
-    // Store the graphics object so we can destroy it later
-    this.choiceTexts.push(choiceBox as any);
+    this.choiceBoxGraphics = this.add.graphics();
+    this.choiceBoxGraphics.fillStyle(0x1a1a40, 0.95); // Slightly lighter than dialog box
+    this.choiceBoxGraphics.fillRect(choiceBoxX, choiceBoxY, choiceBoxWidth, choiceBoxHeight);
+    this.choiceBoxGraphics.lineStyle(2, 0xffff00, 1); // Yellow border to highlight choices
+    this.choiceBoxGraphics.strokeRect(choiceBoxX, choiceBoxY, choiceBoxWidth, choiceBoxHeight);
 
     // Create choice text items
     let y = choiceBoxY + 8;
@@ -370,6 +380,13 @@ export class DialogScene extends Phaser.Scene {
    * Clear choice display
    */
   private clearChoiceDisplay(): void {
+    // Destroy choice box graphics
+    if (this.choiceBoxGraphics) {
+      this.choiceBoxGraphics.destroy();
+      this.choiceBoxGraphics = undefined;
+    }
+
+    // Destroy choice text objects
     this.choiceTexts.forEach(text => text.destroy());
     this.choiceTexts = [];
   }

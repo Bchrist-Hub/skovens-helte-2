@@ -18,12 +18,19 @@ export class MenuScene extends Phaser.Scene {
   private scrollOffset: number = 0; // For paginating long lists
   private canInput: boolean = false;
 
+  // Callback when menu closes
+  private onComplete?: () => void;
+
   // UI elements
   private tabTexts: Map<string, Phaser.GameObjects.Text> = new Map();
   private contentContainer!: Phaser.GameObjects.Container;
 
   constructor() {
     super({ key: 'MenuScene' });
+  }
+
+  init(data?: { onComplete?: () => void }): void {
+    this.onComplete = data?.onComplete;
   }
 
   create(): void {
@@ -185,7 +192,6 @@ export class MenuScene extends Phaser.Scene {
       `Navn: ${player.name}`,
       `Level: ${player.level}`,
       `XP: ${player.xp} / ${player.xpToNext}`,
-      ``,
       `HP: ${player.currentHP} / ${player.baseStats.maxHP}`,
       `MP: ${player.currentMP} / ${player.baseStats.maxMP}`,
       ``,
@@ -199,7 +205,7 @@ export class MenuScene extends Phaser.Scene {
       fontFamily: 'Arial',
       fontSize: '12px',
       color: '#ffffff',
-      lineSpacing: 4
+      lineSpacing: 2
     });
 
     this.contentContainer.add(text);
@@ -208,8 +214,16 @@ export class MenuScene extends Phaser.Scene {
   private showInventoryContent(): void {
     const inventory = this.gameState.getInventory();
 
+    // Show instructions at the top
+    const instructions = this.add.text(20, 40, 'Enter: Brug | X: Sælg (halv pris)', {
+      fontFamily: 'Arial',
+      fontSize: '9px',
+      color: '#888888'
+    });
+    this.contentContainer.add(instructions);
+
     if (inventory.items.length === 0) {
-      const text = this.add.text(20, 50, 'Inventory er tomt', {
+      const text = this.add.text(20, 60, 'Inventory er tomt', {
         fontFamily: 'Arial',
         fontSize: '12px',
         color: '#888888'
@@ -220,7 +234,7 @@ export class MenuScene extends Phaser.Scene {
 
     const maxVisibleItems = 5; // Maximum items shown at once
     const itemHeight = 32;
-    let y = 50;
+    let y = 60; // Start below instructions
 
     // Limit max index
     this.selectedItemIndex = Math.min(this.selectedItemIndex, inventory.items.length - 1);
@@ -256,12 +270,28 @@ export class MenuScene extends Phaser.Scene {
 
       this.contentContainer.add([text, desc]);
 
+      // Show stats for equipment (weapons, armor, shields)
+      if (entry.item.stats) {
+        const statsText = [];
+        if (entry.item.stats.atk) statsText.push(`ATK +${entry.item.stats.atk}`);
+        if (entry.item.stats.def) statsText.push(`DEF +${entry.item.stats.def}`);
+
+        if (statsText.length > 0) {
+          const stats = this.add.text(30, y + 24, `[${statsText.join(' | ')}]`, {
+            fontFamily: 'Arial',
+            fontSize: '9px',
+            color: '#00dd00'
+          });
+          this.contentContainer.add(stats);
+        }
+      }
+
       y += itemHeight;
     });
 
     // Show scroll indicators
     if (this.scrollOffset > 0) {
-      const upArrow = this.add.text(220, 50, '▲ Mere', {
+      const upArrow = this.add.text(220, 60, '▲ Mere', {
         fontFamily: 'Arial',
         fontSize: '10px',
         color: '#888888'
@@ -270,7 +300,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     if (this.scrollOffset + maxVisibleItems < inventory.items.length) {
-      const downArrow = this.add.text(220, 50 + (maxVisibleItems - 1) * itemHeight + 16, '▼ Mere', {
+      const downArrow = this.add.text(220, 60 + (maxVisibleItems - 1) * itemHeight + 16, '▼ Mere', {
         fontFamily: 'Arial',
         fontSize: '10px',
         color: '#888888'
@@ -332,10 +362,32 @@ export class MenuScene extends Phaser.Scene {
         color: '#888888'
       });
       this.contentContainer.add(armorStats);
+      y += 32;
+    } else {
+      y += 20;
     }
 
-    // Limit max index to 1 (weapon or armor)
-    this.selectedItemIndex = Math.min(this.selectedItemIndex, 1);
+    // Shield slot
+    const shieldColor = this.selectedItemIndex === 2 ? '#ffff00' : '#ffffff';
+    const shieldText = this.add.text(20, y, `Skjold: ${player.equipment.shield?.name || 'Intet'}`, {
+      fontFamily: 'Arial',
+      fontSize: '12px',
+      color: shieldColor,
+      fontStyle: this.selectedItemIndex === 2 ? 'bold' : 'normal'
+    });
+    this.contentContainer.add(shieldText);
+
+    if (player.equipment.shield) {
+      const shieldStats = this.add.text(30, y + 14, `DEF +${player.equipment.shield.stats?.def || 0} (Tryk Enter for at unequippe)`, {
+        fontFamily: 'Arial',
+        fontSize: '10px',
+        color: '#888888'
+      });
+      this.contentContainer.add(shieldStats);
+    }
+
+    // Limit max index to 2 (weapon, armor, or shield)
+    this.selectedItemIndex = Math.min(this.selectedItemIndex, 2);
   }
 
   private showSystemContent(): void {
@@ -436,14 +488,14 @@ export class MenuScene extends Phaser.Scene {
         InventorySystem.useConsumable(inventory, player, item.id);
         this.updateTabContent();
       }
-      // Hvis våben eller rustning, equip det
-      else if (item.type === 'weapon' || item.type === 'armor') {
+      // Hvis våben, rustning, eller skjold, equip det
+      else if (item.type === 'weapon' || item.type === 'armor' || item.type === 'shield') {
         InventorySystem.equipItem(inventory, player, item.id);
         this.updateTabContent();
       }
     }
     else if (this.currentTab === 'equipment') {
-      // Unequip selected item (0 = weapon, 1 = armor)
+      // Unequip selected item (0 = weapon, 1 = armor, 2 = shield)
       if (this.selectedItemIndex === 0) {
         // Unequip weapon
         if (player.equipment.weapon) {
@@ -456,6 +508,12 @@ export class MenuScene extends Phaser.Scene {
           InventorySystem.unequipItem(inventory, player, 'armor');
           this.updateTabContent();
         }
+      } else if (this.selectedItemIndex === 2) {
+        // Unequip shield
+        if (player.equipment.shield) {
+          InventorySystem.unequipItem(inventory, player, 'shield');
+          this.updateTabContent();
+        }
       }
     }
   }
@@ -466,6 +524,11 @@ export class MenuScene extends Phaser.Scene {
     this.cameras.main.fadeOut(200, 0, 0, 0);
 
     this.cameras.main.once('camerafadeoutcomplete', () => {
+      // Call completion callback before stopping
+      if (this.onComplete) {
+        this.onComplete();
+      }
+
       this.scene.stop();
     });
   }

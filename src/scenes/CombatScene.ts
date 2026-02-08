@@ -38,10 +38,11 @@ export class CombatScene extends Phaser.Scene {
   private readonly actions = [
     { id: 'attack_normal', label: 'Angreb', description: '95% præcision' },
     { id: 'attack_heavy', label: 'Hårdt slag', description: '70% præcision, +50% skade' },
-    { id: 'defend', label: 'Forsvar', description: 'Halvér næste skade' },
+    { id: 'defend', label: 'Forsvar', description: '3 ture, hver med 75% chance' },
     { id: 'item_heal', label: 'Helbredelsesdrik', description: '+30 HP' },
     { id: 'spell_fire', label: 'Ild (5 MP)', description: 'Magisk skade' },
-    { id: 'spell_heal', label: 'Helbred (4 MP)', description: 'Gendan HP' }
+    { id: 'spell_heal', label: 'Helbred (4 MP)', description: 'Gendan HP' },
+    { id: 'flee', label: 'Flygt', description: '50% chance for flugt' }
   ];
 
   constructor() {
@@ -130,6 +131,24 @@ export class CombatScene extends Phaser.Scene {
 
     const action = this.actions[this.selectedAction];
 
+    // Handle flee attempt
+    if (action.id === 'flee') {
+      const fleeSuccess = Math.random() < 0.5; // 50% chance
+
+      if (fleeSuccess) {
+        this.showMessage('Du flygtede fra kampen!');
+        this.time.delayedCall(2000, () => {
+          this.returnToOverworld();
+        });
+      } else {
+        this.showMessage('Flugt mislykkedes! Fjenden angriber!');
+        this.time.delayedCall(1500, () => {
+          this.executeEnemyTurns();
+        });
+      }
+      return;
+    }
+
     // Find første levende fjende
     const targetIndex = this.enemies.findIndex(e => e.currentHP > 0);
 
@@ -202,6 +221,9 @@ export class CombatScene extends Phaser.Scene {
         } else if (index === aliveEnemies.length - 1) {
           // Sidste fjende - tilbage til spiller-tur
           this.time.delayedCall(1500, () => {
+            // Decrement defend counter at end of turn
+            this.combatSystem.endTurn();
+
             this.currentPhase = 'player_turn';
             this.canInput = true;
             this.showMessage('Hvad vil du gøre?');
@@ -219,6 +241,9 @@ export class CombatScene extends Phaser.Scene {
   private endCombat(result: 'victory' | 'defeat'): void {
     this.currentPhase = result;
     this.canInput = false;
+
+    // Hide action menu so victory/defeat screen is visible
+    this.actionMenu.setVisible(false);
 
     if (result === 'victory') {
       this.handleVictory();

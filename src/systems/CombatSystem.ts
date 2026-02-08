@@ -9,9 +9,13 @@ import type { Player, Monster, CombatEvent } from '@/types';
 export class CombatSystem {
   private player: Player;
   private enemies: Monster[];
-  private isDefending: boolean = false;
+  private defendTurnsRemaining: number = 0; // 0 = not defending, >0 = turns left
   private combatEnded: boolean = false;
   private combatResult: 'victory' | 'defeat' | null = null;
+
+  // Streak tracking for better perceived randomness
+  private heavyAttackMissStreak: number = 0;
+  private heavyAttackHitStreak: number = 0;
 
   constructor(player: Player, enemies: Monster[]) {
     this.player = player;
@@ -93,6 +97,16 @@ export class CombatSystem {
     return this.enemies.filter(e => e.currentHP > 0);
   }
 
+  /**
+   * End turn - decrement defend counter
+   * Called after all enemies have attacked
+   */
+  endTurn(): void {
+    if (this.defendTurnsRemaining > 0) {
+      this.defendTurnsRemaining--;
+    }
+  }
+
   // ============================================================================
   // PLAYER ACTIONS
   // ============================================================================
@@ -138,10 +152,31 @@ export class CombatSystem {
 
   /**
    * Hårdt angreb: ATK * 1.5 - DEF, 70% præcision
+   * Uses streak-breaking to prevent long miss/hit chains
    */
   private attackHeavy(attacker: Player, target: Monster): CombatEvent {
-    const accuracy = 0.70;
+    let accuracy = 0.70;
+
+    // Streak-breaking system for better perceived fairness:
+    // - After 2 consecutive misses, guarantee next hit
+    // - After 3 consecutive hits, force a miss
+    // This prevents frustrating streaks (max 2 miss, max 3 hit)
+    if (this.heavyAttackMissStreak >= 2) {
+      accuracy = 1.00; // Guarantee hit after 2 misses
+    } else if (this.heavyAttackHitStreak >= 3) {
+      accuracy = 0.10; // Very high miss chance after 3 hits (allows occasional 4th)
+    }
+
     const hit = Math.random() < accuracy;
+
+    // Update streak counters
+    if (hit) {
+      this.heavyAttackHitStreak++;
+      this.heavyAttackMissStreak = 0;
+    } else {
+      this.heavyAttackMissStreak++;
+      this.heavyAttackHitStreak = 0;
+    }
 
     if (!hit) {
       return this.createCombatEvent(
@@ -176,11 +211,10 @@ export class CombatSystem {
   }
 
   /**
-   * Forsvar: Halverer modtaget skade næste tur
+   * Forsvar: Altid 3 ture, hver tur har 75% chance for reduceret skade
    */
   private defend(): CombatEvent {
-    this.isDefending = true;
-
+    this.defendTurnsRemaining = 3;
     return this.createCombatEvent(
       'player',
       'defend',
@@ -188,7 +222,7 @@ export class CombatSystem {
       true,
       0,
       this.player.currentHP,
-      `${this.player.name} går i forsvar!`
+      `${this.player.name} går i forsvar! (3 ture beskyttelse)`
     );
   }
 
@@ -318,17 +352,34 @@ export class CombatSystem {
       );
     }
 
-    // Beregn skade (reducer hvis spiller forsvarer)
+    // Beregn skade
     let damage = this.calculatePhysicalDamage(
       enemy.stats.atk,
       this.getTotalDef(this.player),
       1.0
     );
 
-    // Forsvar reducerer skade
-    if (this.isDefending) {
-      damage = Math.floor(damage * 0.5);
-      this.isDefending = false; // Reset forsvar efter brug
+    // Forsvar: Hver tur har 75% chance for reduceret skade
+    let defendMessage = '';
+    if (this.defendTurnsRemaining > 0) {
+      const defendSuccess = Math.random() < 0.75; // 75% chance
+
+      if (defendSuccess) {
+        // Random damage reduction: 50%, 75%, or 100%
+        const reductions = [0.5, 0.25, 0];
+        const randomReduction = reductions[Math.floor(Math.random() * reductions.length)];
+        const originalDamage = damage;
+        damage = Math.floor(damage * randomReduction);
+
+        const blocked = originalDamage - damage;
+        if (randomReduction === 0) {
+          defendMessage = ` Forsvaret blokerede alt (${blocked} skade)!`;
+        } else {
+          defendMessage = ` Forsvaret blokerede ${blocked} skade!`;
+        }
+      } else {
+        defendMessage = ' Forsvaret svigtede!';
+      }
     }
 
     this.player.currentHP = Math.max(0, this.player.currentHP - damage);
@@ -342,7 +393,7 @@ export class CombatSystem {
       true,
       damage,
       this.player.currentHP,
-      `${enemy.name} angriber! ${damage} skade.`,
+      `${enemy.name} angriber! ${damage} skade.${defendMessage}`,
       defeated
     );
   }
@@ -358,10 +409,27 @@ export class CombatSystem {
       Math.floor(enemy.stats.atk * 1.3 - this.getTotalDef(this.player) * 0.5)
     );
 
-    // Forsvar reducerer stadig noget skade
-    if (this.isDefending) {
-      damage = Math.floor(damage * 0.6); // Mindre reduktion end normal angreb
-      this.isDefending = false;
+    // Forsvar: Hver tur har 75% chance for reduceret skade
+    let defendMessage = '';
+    if (this.defendTurnsRemaining > 0) {
+      const defendSuccess = Math.random() < 0.75; // 75% chance
+
+      if (defendSuccess) {
+        // Random damage reduction: 50%, 75%, or 100%
+        const reductions = [0.5, 0.25, 0];
+        const randomReduction = reductions[Math.floor(Math.random() * reductions.length)];
+        const originalDamage = damage;
+        damage = Math.floor(damage * randomReduction);
+
+        const blocked = originalDamage - damage;
+        if (randomReduction === 0) {
+          defendMessage = ` Forsvaret blokerede alt (${blocked} skade)!`;
+        } else {
+          defendMessage = ` Forsvaret blokerede ${blocked} skade!`;
+        }
+      } else {
+        defendMessage = ' Forsvaret svigtede!';
+      }
     }
 
     this.player.currentHP = Math.max(0, this.player.currentHP - damage);
@@ -375,7 +443,7 @@ export class CombatSystem {
       true,
       damage,
       this.player.currentHP,
-      `${enemy.name} ånder ild! ${damage} brændende skade!`,
+      `${enemy.name} ånder ild! ${damage} brændende skade!${defendMessage}`,
       defeated
     );
   }
@@ -466,6 +534,10 @@ export class CombatSystem {
 
     if (player.equipment.armor?.stats?.def) {
       totalDef += player.equipment.armor.stats.def;
+    }
+
+    if (player.equipment.shield?.stats?.def) {
+      totalDef += player.equipment.shield.stats.def;
     }
 
     return totalDef;

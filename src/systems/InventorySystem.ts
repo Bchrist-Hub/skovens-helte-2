@@ -110,7 +110,7 @@ export class InventorySystem {
   static equipItem(inventory: Inventory, player: Player, itemId: string): boolean {
     const item = getItem(itemId);
 
-    if (!item || (item.type !== 'weapon' && item.type !== 'armor')) {
+    if (!item || (item.type !== 'weapon' && item.type !== 'armor' && item.type !== 'shield')) {
       return false;
     }
 
@@ -124,13 +124,17 @@ export class InventorySystem {
       this.addItem(inventory, player.equipment.weapon.id, 1);
     } else if (item.type === 'armor' && player.equipment.armor) {
       this.addItem(inventory, player.equipment.armor.id, 1);
+    } else if (item.type === 'shield' && player.equipment.shield) {
+      this.addItem(inventory, player.equipment.shield.id, 1);
     }
 
     // Equip nyt item
     if (item.type === 'weapon') {
       player.equipment.weapon = item;
-    } else {
+    } else if (item.type === 'armor') {
       player.equipment.armor = item;
+    } else {
+      player.equipment.shield = item;
     }
 
     // Fjern fra inventory
@@ -140,9 +144,9 @@ export class InventorySystem {
   }
 
   /**
-   * Unequip våben eller rustning
+   * Unequip våben, rustning, eller skjold
    */
-  static unequipItem(inventory: Inventory, player: Player, slot: 'weapon' | 'armor'): boolean {
+  static unequipItem(inventory: Inventory, player: Player, slot: 'weapon' | 'armor' | 'shield'): boolean {
     const equippedItem = player.equipment[slot];
 
     if (!equippedItem) {
@@ -175,13 +179,17 @@ export class InventorySystem {
   }
 
   /**
-   * Få total DEF (base + armor)
+   * Få total DEF (base + armor + shield)
    */
   static getTotalDef(player: Player): number {
     let total = player.baseStats.def;
 
     if (player.equipment.armor?.stats?.def) {
       total += player.equipment.armor.stats.def;
+    }
+
+    if (player.equipment.shield?.stats?.def) {
+      total += player.equipment.shield.stats.def;
     }
 
     return total;
