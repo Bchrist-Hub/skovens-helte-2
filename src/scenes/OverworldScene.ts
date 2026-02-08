@@ -1320,71 +1320,72 @@ export class OverworldScene extends Phaser.Scene {
 
     // Place inn/tavern furniture
     if (currentMap === 'inn_interior') {
-      // Tables (16x16 sprites, each table is 1 tile)
+      // Tables (80x80 sprite = 5x5 grid, use different frames)
+      // Frame indices: 0-24 (5 rows × 5 columns)
       const tablePositions = [
-        { x: 3, y: 3 },
-        { x: 7, y: 3 },
-        { x: 15, y: 3 },
-        { x: 3, y: 7 },
-        { x: 7, y: 7 },
-        { x: 15, y: 7 }
+        { x: 3, y: 3, frame: 0 },   // Top-left table frame
+        { x: 7, y: 3, frame: 2 },   // Different table frame
+        { x: 15, y: 3, frame: 5 },  // Middle-left frame
+        { x: 3, y: 7, frame: 10 },  // Bottom row start
+        { x: 7, y: 7, frame: 12 },  // Bottom row middle
+        { x: 15, y: 7, frame: 15 }  // Bottom row
       ];
 
-      tablePositions.forEach(({ x, y }) => {
+      tablePositions.forEach(({ x, y, frame }) => {
         const table = this.add.sprite(
           x * this.TILE_SIZE,
           y * this.TILE_SIZE,
           'tavern_big_table',
-          0
+          frame
         );
         table.setOrigin(0, 0);
         table.setDepth(5);
         this.decorations.push({ sprite: table });
       });
 
-      // Chairs around tables
+      // Chairs (32x64 sprite = 2×4 grid, frames 0-7)
       const chairPositions = [
-        { x: 2, y: 3 }, { x: 4, y: 3 },  // Around first table
-        { x: 6, y: 3 }, { x: 8, y: 3 },  // Around second table
-        { x: 14, y: 3 }, { x: 16, y: 3 }, // Around third table
-        { x: 2, y: 7 }, { x: 4, y: 7 },  // Around fourth table
-        { x: 6, y: 7 }, { x: 8, y: 7 },  // Around fifth table
-        { x: 14, y: 7 }, { x: 16, y: 7 }  // Around sixth table
+        { x: 2, y: 3, frame: 0 }, { x: 4, y: 3, frame: 1 },  // Around first table
+        { x: 6, y: 3, frame: 2 }, { x: 8, y: 3, frame: 3 },  // Around second table
+        { x: 14, y: 3, frame: 4 }, { x: 16, y: 3, frame: 5 }, // Around third table
+        { x: 2, y: 7, frame: 0 }, { x: 4, y: 7, frame: 1 },  // Around fourth table
+        { x: 6, y: 7, frame: 2 }, { x: 8, y: 7, frame: 3 },  // Around fifth table
+        { x: 14, y: 7, frame: 4 }, { x: 16, y: 7, frame: 5 }  // Around sixth table
       ];
 
-      chairPositions.forEach(({ x, y }) => {
+      chairPositions.forEach(({ x, y, frame }) => {
         const chair = this.add.sprite(
           x * this.TILE_SIZE,
           y * this.TILE_SIZE,
           'tavern_chair',
-          0
+          frame
         );
         chair.setOrigin(0, 0);
         chair.setDepth(5);
         this.decorations.push({ sprite: chair });
       });
 
-      // Barrels in corners
+      // Barrels (32x64 sprite = 2×4 grid, frames 0-7)
       const barrelPositions = [
-        { x: 1, y: 1 },
-        { x: 18, y: 1 },
-        { x: 1, y: 10 },
-        { x: 18, y: 10 }
+        { x: 1, y: 1, frame: 0 },
+        { x: 18, y: 1, frame: 1 },
+        { x: 1, y: 10, frame: 2 },
+        { x: 18, y: 10, frame: 3 }
       ];
 
-      barrelPositions.forEach(({ x, y }) => {
+      barrelPositions.forEach(({ x, y, frame }) => {
         const barrel = this.add.sprite(
           x * this.TILE_SIZE,
           y * this.TILE_SIZE,
           'tavern_barrel',
-          0
+          frame
         );
         barrel.setOrigin(0, 0);
         barrel.setDepth(5);
         this.decorations.push({ sprite: barrel });
       });
 
-      // Mugs on some tables
+      // Mugs on some tables (16x16, single frame = 0)
       const mugPositions = [
         { x: 3, y: 3 },
         { x: 15, y: 3 },
