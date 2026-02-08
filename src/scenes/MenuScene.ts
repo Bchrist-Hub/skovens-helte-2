@@ -15,6 +15,7 @@ export class MenuScene extends Phaser.Scene {
   // Menu state
   private currentTab: 'stats' | 'inventory' | 'equipment' | 'system' = 'stats';
   private selectedItemIndex: number = 0;
+  private scrollOffset: number = 0; // For paginating long lists
   private canInput: boolean = false;
 
   // UI elements
@@ -110,10 +111,10 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private createTabs(): void {
-    const tabs = ['Stats', 'Inventory', 'Equipment', 'System'];
+    const tabs = ['Stats', 'Inv', 'Equip', 'System'];
     const startX = 20;
     const y = 20;
-    const spacing = 70;
+    const spacing = 55; // Reduced from 70 to prevent overflow
 
     tabs.forEach((tabName, index) => {
       const text = this.add.text(startX + index * spacing, y, tabName, {
@@ -122,8 +123,8 @@ export class MenuScene extends Phaser.Scene {
         color: '#888888'
       });
 
-      const tabId = tabName.toLowerCase() as 'stats' | 'inventory' | 'equipment' | 'system';
-      this.tabTexts.set(tabId, text);
+      const tabIds: Array<'stats' | 'inventory' | 'equipment' | 'system'> = ['stats', 'inventory', 'equipment', 'system'];
+      this.tabTexts.set(tabIds[index], text);
     });
 
     this.updateTabHighlight();
@@ -148,6 +149,7 @@ export class MenuScene extends Phaser.Scene {
 
     this.currentTab = tabs[newIndex];
     this.selectedItemIndex = 0;
+    this.scrollOffset = 0; // Reset scroll when switching tabs
 
     this.updateTabHighlight();
     this.updateTabContent();
@@ -216,10 +218,26 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
 
+    const maxVisibleItems = 5; // Maximum items shown at once
+    const itemHeight = 32;
     let y = 50;
 
-    inventory.items.forEach((entry, index) => {
-      const isSelected = index === this.selectedItemIndex;
+    // Limit max index
+    this.selectedItemIndex = Math.min(this.selectedItemIndex, inventory.items.length - 1);
+
+    // Auto-scroll: ensure selected item is visible
+    if (this.selectedItemIndex < this.scrollOffset) {
+      this.scrollOffset = this.selectedItemIndex;
+    } else if (this.selectedItemIndex >= this.scrollOffset + maxVisibleItems) {
+      this.scrollOffset = this.selectedItemIndex - maxVisibleItems + 1;
+    }
+
+    // Render only visible items
+    const visibleItems = inventory.items.slice(this.scrollOffset, this.scrollOffset + maxVisibleItems);
+
+    visibleItems.forEach((entry, visibleIndex) => {
+      const actualIndex = this.scrollOffset + visibleIndex;
+      const isSelected = actualIndex === this.selectedItemIndex;
       const color = isSelected ? '#ffff00' : '#ffffff';
 
       const text = this.add.text(20, y, `${entry.item.name} x${entry.quantity}`, {
@@ -232,16 +250,33 @@ export class MenuScene extends Phaser.Scene {
       const desc = this.add.text(30, y + 14, entry.item.description, {
         fontFamily: 'Arial',
         fontSize: '10px',
-        color: '#888888'
+        color: '#888888',
+        wordWrap: { width: 200 } // Prevent text overflow
       });
 
       this.contentContainer.add([text, desc]);
 
-      y += 32;
+      y += itemHeight;
     });
 
-    // Limit max index
-    this.selectedItemIndex = Math.min(this.selectedItemIndex, inventory.items.length - 1);
+    // Show scroll indicators
+    if (this.scrollOffset > 0) {
+      const upArrow = this.add.text(220, 50, '▲ Mere', {
+        fontFamily: 'Arial',
+        fontSize: '10px',
+        color: '#888888'
+      });
+      this.contentContainer.add(upArrow);
+    }
+
+    if (this.scrollOffset + maxVisibleItems < inventory.items.length) {
+      const downArrow = this.add.text(220, 50 + (maxVisibleItems - 1) * itemHeight + 16, '▼ Mere', {
+        fontFamily: 'Arial',
+        fontSize: '10px',
+        color: '#888888'
+      });
+      this.contentContainer.add(downArrow);
+    }
   }
 
   private showEquipmentContent(): void {

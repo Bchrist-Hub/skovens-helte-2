@@ -16,6 +16,7 @@ export class ShopScene extends Phaser.Scene {
 
   // State
   private selectedItemIndex: number = 0;
+  private scrollOffset: number = 0; // For paginating long shop lists
   private canInput: boolean = false;
 
   // UI elements
@@ -152,15 +153,26 @@ export class ShopScene extends Phaser.Scene {
     this.itemTexts.forEach(text => text.destroy());
     this.itemTexts = [];
 
-    // Display items
-    let y = 65;
+    const maxVisibleItems = 6; // Maximum items shown at once
     const inventory = this.gameState.getInventory();
 
-    this.shop.items.forEach((shopItem, index) => {
+    // Auto-scroll: ensure selected item is visible
+    if (this.selectedItemIndex < this.scrollOffset) {
+      this.scrollOffset = this.selectedItemIndex;
+    } else if (this.selectedItemIndex >= this.scrollOffset + maxVisibleItems) {
+      this.scrollOffset = this.selectedItemIndex - maxVisibleItems + 1;
+    }
+
+    // Render only visible items
+    let y = 65;
+    const visibleItems = this.shop.items.slice(this.scrollOffset, this.scrollOffset + maxVisibleItems);
+
+    visibleItems.forEach((shopItem, visibleIndex) => {
+      const actualIndex = this.scrollOffset + visibleIndex;
       const item = getItem(shopItem.itemId);
       if (!item) return;
 
-      const isSelected = index === this.selectedItemIndex;
+      const isSelected = actualIndex === this.selectedItemIndex;
       const canAfford = gold >= shopItem.price;
 
       // Determine color
@@ -192,7 +204,8 @@ export class ShopScene extends Phaser.Scene {
           {
             fontFamily: 'Arial',
             fontSize: '10px',
-            color: '#888888'
+            color: '#888888',
+            wordWrap: { width: 180 } // Prevent text overflow
           }
         );
         this.itemTexts.push(desc);
@@ -215,7 +228,6 @@ export class ShopScene extends Phaser.Scene {
               }
             );
             this.itemTexts.push(stats);
-            y += 12;
           }
         }
 
@@ -224,6 +236,27 @@ export class ShopScene extends Phaser.Scene {
         y += 18;
       }
     });
+
+    // Show scroll indicators
+    const height = this.cameras.main.height;
+
+    if (this.scrollOffset > 0) {
+      const upArrow = this.add.text(200, 65, '▲', {
+        fontFamily: 'Arial',
+        fontSize: '12px',
+        color: '#888888'
+      });
+      this.itemTexts.push(upArrow);
+    }
+
+    if (this.scrollOffset + maxVisibleItems < this.shop.items.length) {
+      const downArrow = this.add.text(200, height - 60, '▼', {
+        fontFamily: 'Arial',
+        fontSize: '12px',
+        color: '#888888'
+      });
+      this.itemTexts.push(downArrow);
+    }
   }
 
   private buySelectedItem(): void {
