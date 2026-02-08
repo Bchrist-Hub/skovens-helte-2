@@ -1317,6 +1317,92 @@ export class OverworldScene extends Phaser.Scene {
         this.decorations.push({ sprite: animal });
       });
     }
+
+    // Place inn/tavern furniture
+    if (currentMap === 'inn_interior') {
+      // Tables (16x16 sprites, each table is 1 tile)
+      const tablePositions = [
+        { x: 3, y: 3 },
+        { x: 7, y: 3 },
+        { x: 15, y: 3 },
+        { x: 3, y: 7 },
+        { x: 7, y: 7 },
+        { x: 15, y: 7 }
+      ];
+
+      tablePositions.forEach(({ x, y }) => {
+        const table = this.add.sprite(
+          x * this.TILE_SIZE,
+          y * this.TILE_SIZE,
+          'tavern_big_table',
+          0
+        );
+        table.setOrigin(0, 0);
+        table.setDepth(5);
+        this.decorations.push({ sprite: table });
+      });
+
+      // Chairs around tables
+      const chairPositions = [
+        { x: 2, y: 3 }, { x: 4, y: 3 },  // Around first table
+        { x: 6, y: 3 }, { x: 8, y: 3 },  // Around second table
+        { x: 14, y: 3 }, { x: 16, y: 3 }, // Around third table
+        { x: 2, y: 7 }, { x: 4, y: 7 },  // Around fourth table
+        { x: 6, y: 7 }, { x: 8, y: 7 },  // Around fifth table
+        { x: 14, y: 7 }, { x: 16, y: 7 }  // Around sixth table
+      ];
+
+      chairPositions.forEach(({ x, y }) => {
+        const chair = this.add.sprite(
+          x * this.TILE_SIZE,
+          y * this.TILE_SIZE,
+          'tavern_chair',
+          0
+        );
+        chair.setOrigin(0, 0);
+        chair.setDepth(5);
+        this.decorations.push({ sprite: chair });
+      });
+
+      // Barrels in corners
+      const barrelPositions = [
+        { x: 1, y: 1 },
+        { x: 18, y: 1 },
+        { x: 1, y: 10 },
+        { x: 18, y: 10 }
+      ];
+
+      barrelPositions.forEach(({ x, y }) => {
+        const barrel = this.add.sprite(
+          x * this.TILE_SIZE,
+          y * this.TILE_SIZE,
+          'tavern_barrel',
+          0
+        );
+        barrel.setOrigin(0, 0);
+        barrel.setDepth(5);
+        this.decorations.push({ sprite: barrel });
+      });
+
+      // Mugs on some tables
+      const mugPositions = [
+        { x: 3, y: 3 },
+        { x: 15, y: 3 },
+        { x: 7, y: 7 }
+      ];
+
+      mugPositions.forEach(({ x, y }) => {
+        const mug = this.add.sprite(
+          x * this.TILE_SIZE,
+          y * this.TILE_SIZE,
+          'tavern_mug',
+          0
+        );
+        mug.setOrigin(0, 0);
+        mug.setDepth(6); // Above tables
+        this.decorations.push({ sprite: mug });
+      });
+    }
   }
 
   /**

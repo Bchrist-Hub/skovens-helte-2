@@ -122,6 +122,36 @@ export const DECORATION_SPRITES: ImageConfig[] = [
 ];
 
 /**
+ * Tavern/Inn decoration sprite configurations (16x16 tiles)
+ */
+export const TAVERN_SPRITES: SpriteConfig[] = [
+  {
+    key: 'tavern_big_table',
+    path: 'assets/Tavern/tavern-big-tables (1).png',
+    frameWidth: 16,
+    frameHeight: 16
+  },
+  {
+    key: 'tavern_chair',
+    path: 'assets/Tavern/tavern-medium-props (1).png',
+    frameWidth: 16,
+    frameHeight: 16
+  },
+  {
+    key: 'tavern_barrel',
+    path: 'assets/Tavern/tavern-medium-props (5).png',
+    frameWidth: 16,
+    frameHeight: 16
+  },
+  {
+    key: 'tavern_mug',
+    path: 'assets/Tavern/tavern-small-props (1).png',
+    frameWidth: 16,
+    frameHeight: 16
+  }
+];
+
+/**
  * Animal sprite configurations (32x32 per frame in 2x2 grid)
  */
 export const ANIMAL_SPRITES: SpriteConfig[] = [
@@ -303,7 +333,8 @@ export const ALL_SPRITES = {
   player: PLAYER_SPRITES,
   monsters: MONSTER_SPRITES,
   tiles: TILE_SPRITES,
-  decorations: DECORATION_SPRITES
+  decorations: DECORATION_SPRITES,
+  tavern: TAVERN_SPRITES
 };
 
 /**

@@ -6,6 +6,7 @@ import {
   TILESET_SPRITES,
   DECORATION_SPRITES,
   ANIMAL_SPRITES,
+  TAVERN_SPRITES,
   PLAYER_ANIMS,
   MONSTER_ANIMS
 } from '@/config/assets';
@@ -67,6 +68,14 @@ export class BootScene extends Phaser.Scene {
     // Load decoration images
     DECORATION_SPRITES.forEach(deco => {
       this.load.image(deco.key, deco.path);
+    });
+
+    // Load tavern/inn decoration sprites
+    TAVERN_SPRITES.forEach(sprite => {
+      this.load.spritesheet(sprite.key, sprite.path, {
+        frameWidth: sprite.frameWidth!,
+        frameHeight: sprite.frameHeight!
+      });
     });
 
     console.log('BootScene: All assets queued for loading');
