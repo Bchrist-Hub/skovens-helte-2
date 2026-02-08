@@ -1,0 +1,215 @@
+{
+  "compressionlevel": -1,
+  "height": 15,
+  "infinite": false,
+  "layers": [
+    {
+      "data": [
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+      ],
+      "height": 15,
+      "id": 1,
+      "name": "Ground",
+      "opacity": 1,
+      "type": "tilelayer",
+      "visible": true,
+      "width": 20,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "data": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ],
+      "height": 15,
+      "id": 2,
+      "name": "Obstacles",
+      "opacity": 1,
+      "properties": [
+        {
+          "name": "collides",
+          "type": "bool",
+          "value": true
+        }
+      ],
+      "type": "tilelayer",
+      "visible": true,
+      "width": 20,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 3,
+      "name": "Objects",
+      "objects": [
+        {
+          "height": 16,
+          "id": 1,
+          "name": "house",
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "house_wood"
+            },
+            {
+              "name": "shopId",
+              "type": "string",
+              "value": "village_shop"
+            }
+          ],
+          "rotation": 0,
+          "type": "decoration",
+          "visible": true,
+          "width": 48,
+          "x": 256,
+          "y": 64
+        },
+        {
+          "height": 16,
+          "id": 2,
+          "name": "cow",
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "cow"
+            }
+          ],
+          "rotation": 0,
+          "type": "decoration",
+          "visible": true,
+          "width": 16,
+          "x": 48,
+          "y": 48
+        },
+        {
+          "height": 16,
+          "id": 3,
+          "name": "pig",
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "pig"
+            }
+          ],
+          "rotation": 0,
+          "type": "decoration",
+          "visible": true,
+          "width": 16,
+          "x": 96,
+          "y": 48
+        },
+        {
+          "height": 16,
+          "id": 4,
+          "name": "chicken",
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "chicken"
+            }
+          ],
+          "rotation": 0,
+          "type": "decoration",
+          "visible": true,
+          "width": 16,
+          "x": 48,
+          "y": 96
+        },
+        {
+          "height": 16,
+          "id": 5,
+          "name": "sheep",
+          "properties": [
+            {
+              "name": "sprite",
+              "type": "string",
+              "value": "sheep"
+            }
+          ],
+          "rotation": 0,
+          "type": "decoration",
+          "visible": true,
+          "width": 16,
+          "x": 96,
+          "y": 96
+        },
+        {
+          "height": 16,
+          "id": 6,
+          "name": "door_to_house",
+          "properties": [
+            {
+              "name": "targetMap",
+              "type": "string",
+              "value": "house_interior"
+            },
+            {
+              "name": "targetX",
+              "type": "int",
+              "value": 10
+            },
+            {
+              "name": "targetY",
+              "type": "int",
+              "value": 11
+            }
+          ],
+          "rotation": 0,
+          "type": "transition",
+          "visible": true,
+          "width": 16,
+          "x": 272,
+          "y": 112
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 4,
+  "nextobjectid": 7,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tiledversion": "1.10.2",
+  "tileheight": 16,
+  "tilewidth": 16,
+  "type": "map",
+  "version": "1.10",
+  "width": 20
+}
