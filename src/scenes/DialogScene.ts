@@ -306,13 +306,27 @@ export class DialogScene extends Phaser.Scene {
     this.selectedChoiceIndex = 0;
     this.continueIcon.setVisible(false);
 
-    // Clear dialog text to make room for choices
-    this.dialogText.setText('');
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
 
-    // Create choice UI
-    const boxX = 10;
-    const boxY = this.cameras.main.height - 70;
-    let y = boxY + 8;
+    // Create separate choice box above the dialog box
+    const choiceBoxWidth = width - 20;
+    const choiceBoxHeight = Math.min(60, choices.length * 16 + 16); // Dynamic height based on choice count
+    const choiceBoxX = 10;
+    const choiceBoxY = height - 70 - choiceBoxHeight - 10; // Above the main dialog box
+
+    // Draw choice box background
+    const choiceBox = this.add.graphics();
+    choiceBox.fillStyle(0x1a1a40, 0.95); // Slightly lighter than dialog box
+    choiceBox.fillRect(choiceBoxX, choiceBoxY, choiceBoxWidth, choiceBoxHeight);
+    choiceBox.lineStyle(2, 0xffff00, 1); // Yellow border to highlight choices
+    choiceBox.strokeRect(choiceBoxX, choiceBoxY, choiceBoxWidth, choiceBoxHeight);
+
+    // Store the graphics object so we can destroy it later
+    this.choiceTexts.push(choiceBox as any);
+
+    // Create choice text items
+    let y = choiceBoxY + 8;
 
     choices.forEach((choice) => {
       let choiceText = choice.text;
@@ -322,7 +336,7 @@ export class DialogScene extends Phaser.Scene {
         choiceText += ` (${choice.cost}g)`;
       }
 
-      const text = this.add.text(boxX + 16, y, choiceText, {
+      const text = this.add.text(choiceBoxX + 16, y, choiceText, {
         fontFamily: 'Arial',
         fontSize: '11px',
         color: '#ffffff'

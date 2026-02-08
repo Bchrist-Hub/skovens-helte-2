@@ -260,8 +260,8 @@ export class OverworldScene extends Phaser.Scene {
         // Increment encounter steps
         this.gameState.incrementEncounterSteps();
 
-        // Check for random encounter (DISABLED FOR TESTING - use 'C' key instead)
-        // this.checkForEncounter();
+        // Check for random encounter (only on maps with encounters)
+        this.checkForEncounter();
 
         // Check for map transitions
         this.checkForMapTransition();
@@ -870,6 +870,22 @@ export class OverworldScene extends Phaser.Scene {
    * Check om der skal være et random encounter
    */
   private checkForEncounter(): void {
+    const currentMap = this.gameState.getState().currentMap;
+
+    // Define which maps have encounters and their encounter table IDs
+    const encounterMaps: Record<string, string> = {
+      'village_outskirts': 'forest_north', // Slimes and Wolves (10% rate)
+      // Future maps:
+      // 'forest_path': 'forest_north',
+      // 'dark_forest': 'forest_south',
+      // 'dragons_lair_entrance': 'mountain'
+    };
+
+    // Only check for encounters on maps with encounter zones
+    if (!encounterMaps[currentMap]) {
+      return; // No encounters on this map (village, interiors, etc.)
+    }
+
     const encounterSteps = this.gameState.getState().encounterSteps;
 
     // Encounter threshold: 5-10 skridt
@@ -884,21 +900,27 @@ export class OverworldScene extends Phaser.Scene {
     const chance = Math.min(0.3, (encounterSteps - minSteps) / (maxSteps - minSteps) * 0.3);
 
     if (Math.random() < chance) {
-      this.startEncounter();
+      this.startEncounter(encounterMaps[currentMap]);
     }
   }
 
   /**
    * Start en random encounter
    */
-  private startEncounter(): void {
+  private startEncounter(encounterTableId?: string): void {
     console.log('Encounter triggered!');
 
     // Reset encounter counter
     this.gameState.resetEncounterSteps();
 
-    // Generate enemies (for now, use forest_north table)
-    const enemies = generateEncounter('forest_north');
+    // Get current map's encounter table if not specified
+    if (!encounterTableId) {
+      const currentMap = this.gameState.getState().currentMap;
+      encounterTableId = currentMap === 'village_outskirts' ? 'forest_north' : 'forest_north';
+    }
+
+    // Generate enemies from encounter table
+    const enemies = generateEncounter(encounterTableId);
 
     // Pause OverworldScene (men stop den ikke - vi kommer tilbage)
     this.scene.pause();
@@ -1100,6 +1122,9 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
 
+    // Pause OverworldScene to prevent player movement during dialog
+    this.scene.pause();
+
     this.scene.launch('DialogScene', {
       dialog: dialog,
       onComplete: () => {
@@ -1110,6 +1135,9 @@ export class OverworldScene extends Phaser.Scene {
 
         // Refresh NPCs (in case flags changed visibility)
         this.refreshNPCs();
+
+        // Resume OverworldScene after dialog closes
+        this.scene.resume();
       }
     });
   }
