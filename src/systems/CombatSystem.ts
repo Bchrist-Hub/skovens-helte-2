@@ -107,6 +107,13 @@ export class CombatSystem {
     }
   }
 
+  /**
+   * Get remaining defend turns
+   */
+  getDefendTurnsRemaining(): number {
+    return this.defendTurnsRemaining;
+  }
+
   // ============================================================================
   // PLAYER ACTIONS
   // ============================================================================

@@ -28,6 +28,7 @@ export class CombatScene extends Phaser.Scene {
   // UI elements
   private playerHPText!: Phaser.GameObjects.Text;
   private playerMPText!: Phaser.GameObjects.Text;
+  private defendText!: Phaser.GameObjects.Text;
   private enemySprites: Phaser.GameObjects.Sprite[] = [];
   private enemyHPTexts: Phaser.GameObjects.Text[] = [];
   private messageText!: Phaser.GameObjects.Text;
@@ -419,16 +420,23 @@ export class CombatScene extends Phaser.Scene {
 
     // Player HP/MP bar (nederst til venstre)
 
-    this.playerHPText = this.add.text(10, height - 40, '', {
+    this.playerHPText = this.add.text(10, height - 55, '', {
       fontFamily: 'Arial',
       fontSize: '12px',
       color: '#ffffff'
     });
 
-    this.playerMPText = this.add.text(10, height - 25, '', {
+    this.playerMPText = this.add.text(10, height - 40, '', {
       fontFamily: 'Arial',
       fontSize: '12px',
       color: '#00ffff'
+    });
+
+    this.defendText = this.add.text(10, height - 25, '', {
+      fontFamily: 'Arial',
+      fontSize: '12px',
+      color: '#ffaa00',
+      fontStyle: 'bold'
     });
 
     // Enemy sprites (øverst, centreret)
@@ -554,6 +562,15 @@ export class CombatScene extends Phaser.Scene {
     // Update player stats
     this.playerHPText.setText(`HP: ${player.currentHP}/${player.baseStats.maxHP}`);
     this.playerMPText.setText(`MP: ${player.currentMP}/${player.baseStats.maxMP}`);
+
+    // Update defend status
+    const defendTurns = this.combatSystem.getDefendTurnsRemaining();
+    if (defendTurns > 0) {
+      this.defendText.setText(`🛡️ Forsvar: ${defendTurns} tur${defendTurns > 1 ? 'e' : ''}`);
+      this.defendText.setVisible(true);
+    } else {
+      this.defendText.setVisible(false);
+    }
 
     // Update enemy HP
     this.enemies.forEach((enemy, index) => {
