@@ -5,26 +5,11 @@ import type { NPC } from '@/types';
  *
  * NPCs kan have dialog, shops, eller quests
  */
+
+// ============================================================================
+// Village NPCs (Outdoor)
+// ============================================================================
 export const VILLAGE_NPCS: NPC[] = [
-  {
-    id: 'village_elder',
-    name: 'Landsby Ældste',
-    sprite: 'npc_elder',
-    tileX: 8,
-    tileY: 5,
-    dialog: 'elder_greeting',
-    facingDirection: 'down'
-  },
-  {
-    id: 'shopkeeper',
-    name: 'Købmand',
-    sprite: 'npc_merchant',
-    tileX: 12,
-    tileY: 7,
-    dialog: 'shopkeeper_greeting',
-    shopId: 'village_shop',
-    facingDirection: 'down'
-  },
   {
     id: 'villager_woman',
     name: 'Landsbykvinde',
@@ -42,32 +27,12 @@ export const VILLAGE_NPCS: NPC[] = [
     tileY: 12,
     dialog: 'worried_man_greeting',
     facingDirection: 'left'
-  },
-  {
-    id: 'guard',
-    name: 'Vagt',
-    sprite: 'npc_guard',
-    tileX: 8,
-    tileY: 15,
-    dialog: 'guard_greeting',
-    facingDirection: 'up',
-    condition: '!dragon_defeated' // Forsvinder når dragon er besejret
-  },
-  {
-    id: 'guard_victory',
-    name: 'Vagt',
-    sprite: 'npc_guard',
-    tileX: 8,
-    tileY: 15,
-    dialog: 'guard_victory',
-    facingDirection: 'up',
-    condition: 'dragon_defeated' // Vises kun når dragon er besejret
   }
 ];
 
-/**
- * House interior NPCs
- */
+// ============================================================================
+// House Interior NPCs
+// ============================================================================
 export const HOUSE_INTERIOR_NPCS: NPC[] = [
   {
     id: 'shopkeeper_interior',
@@ -81,6 +46,52 @@ export const HOUSE_INTERIOR_NPCS: NPC[] = [
   }
 ];
 
+// ============================================================================
+// Inn Interior NPCs
+// ============================================================================
+export const INN_INTERIOR_NPCS: NPC[] = [
+  {
+    id: 'innkeeper',
+    name: 'Kromand',
+    sprite: 'npc_merchant',
+    tileX: 10,
+    tileY: 5,
+    dialog: 'innkeeper_greeting',
+    facingDirection: 'down'
+  }
+];
+
+// ============================================================================
+// Blacksmith Interior NPCs
+// ============================================================================
+export const BLACKSMITH_INTERIOR_NPCS: NPC[] = [
+  {
+    id: 'blacksmith',
+    name: 'Smed',
+    sprite: 'npc_merchant',
+    tileX: 10,
+    tileY: 7,
+    dialog: 'blacksmith_greeting',
+    shopId: 'blacksmith_shop',
+    facingDirection: 'down'
+  }
+];
+
+// ============================================================================
+// Elder's House Interior NPCs
+// ============================================================================
+export const ELDER_HOUSE_INTERIOR_NPCS: NPC[] = [
+  {
+    id: 'elder_interior',
+    name: 'Landsby Ældste',
+    sprite: 'npc_elder',
+    tileX: 7,
+    tileY: 5,
+    dialog: 'elder_greeting',
+    facingDirection: 'down'
+  }
+];
+
 /**
  * Få NPCs for en given map
  */
@@ -90,6 +101,12 @@ export function getNPCsForMap(mapName: string): NPC[] {
       return VILLAGE_NPCS;
     case 'house_interior':
       return HOUSE_INTERIOR_NPCS;
+    case 'inn_interior':
+      return INN_INTERIOR_NPCS;
+    case 'blacksmith_interior':
+      return BLACKSMITH_INTERIOR_NPCS;
+    case 'elder_house_interior':
+      return ELDER_HOUSE_INTERIOR_NPCS;
     default:
       return [];
   }
@@ -99,6 +116,12 @@ export function getNPCsForMap(mapName: string): NPC[] {
  * Find en specifik NPC ved ID
  */
 export function getNPCById(npcId: string): NPC | undefined {
-  const allNPCs = [...VILLAGE_NPCS];
+  const allNPCs = [
+    ...VILLAGE_NPCS,
+    ...HOUSE_INTERIOR_NPCS,
+    ...INN_INTERIOR_NPCS,
+    ...BLACKSMITH_INTERIOR_NPCS,
+    ...ELDER_HOUSE_INTERIOR_NPCS
+  ];
   return allNPCs.find(npc => npc.id === npcId);
 }

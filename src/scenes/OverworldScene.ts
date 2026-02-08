@@ -307,6 +307,15 @@ export class OverworldScene extends Phaser.Scene {
       case 'house_interior':
         this.createHouseInteriorMap();
         break;
+      case 'inn_interior':
+        this.createInnInteriorMap();
+        break;
+      case 'blacksmith_interior':
+        this.createBlacksmithInteriorMap();
+        break;
+      case 'elder_house_interior':
+        this.createElderHouseInteriorMap();
+        break;
       case 'village_outskirts':
         this.createVillageOutskirtsMap();
         break;
@@ -358,8 +367,9 @@ export class OverworldScene extends Phaser.Scene {
     this.placeCliff(13, 5, 'small');
     this.placeCliff(10, 9, 'large');
 
-    // Block tiles where house is (3x4 tiles at position 16,4)
-    // House is at (16, 4), size 3x4 tiles
+    // Block tiles where buildings are (3x4 tiles each)
+
+    // Shop/House (right side): (16, 4), size 3x4 tiles
     for (let y = 4; y < 8; y++) {
       for (let x = 16; x < 19; x++) {
         // Leave door open at (17, 7) for entrance
@@ -369,14 +379,72 @@ export class OverworldScene extends Phaser.Scene {
       }
     }
 
-    // Add map transition at house door (bottom center of house)
-    // House is at (16, 4), size 3x4 tiles, so door is at center bottom: (17, 7)
+    // Blacksmith (middle right): (12, 4), size 3x4 tiles
+    for (let y = 4; y < 8; y++) {
+      for (let x = 12; x < 15; x++) {
+        // Leave door open at (13, 7) for entrance
+        if (!(x === 13 && y === 7)) {
+          this.tilemap[y][x] = this.TILE_WALL;
+        }
+      }
+    }
+
+    // Inn (left side): (3, 4), size 3x4 tiles
+    for (let y = 4; y < 8; y++) {
+      for (let x = 3; x < 6; x++) {
+        // Leave door open at (4, 7) for entrance
+        if (!(x === 4 && y === 7)) {
+          this.tilemap[y][x] = this.TILE_WALL;
+        }
+      }
+    }
+
+    // Elder's House (top center): (9, 2), size 3x3 tiles (smaller)
+    for (let y = 2; y < 5; y++) {
+      for (let x = 9; x < 12; x++) {
+        // Leave door open at (10, 4) for entrance
+        if (!(x === 10 && y === 4)) {
+          this.tilemap[y][x] = this.TILE_WALL;
+        }
+      }
+    }
+
+    // Map transitions (doors to buildings)
+
+    // Shop/House door
     this.mapTransitions.push({
       x: 17,
       y: 7,
       targetMap: 'house_interior',
       targetX: 10,
-      targetY: 11  // Spawn just north of the exit door
+      targetY: 11
+    });
+
+    // Blacksmith door
+    this.mapTransitions.push({
+      x: 13,
+      y: 7,
+      targetMap: 'blacksmith_interior',
+      targetX: 10,
+      targetY: 11
+    });
+
+    // Inn door
+    this.mapTransitions.push({
+      x: 4,
+      y: 7,
+      targetMap: 'inn_interior',
+      targetX: 10,
+      targetY: 11
+    });
+
+    // Elder's House door
+    this.mapTransitions.push({
+      x: 10,
+      y: 4,
+      targetMap: 'elder_house_interior',
+      targetX: 7,
+      targetY: 9
     });
 
     // North exit to Village Outskirts
@@ -494,6 +562,105 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /**
+   * Create inn interior map
+   */
+  private createInnInteriorMap(): void {
+    this.MAP_WIDTH = 20;
+    this.MAP_HEIGHT = 15;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Walls on all edges
+        if (x === 0 || x === this.MAP_WIDTH - 1 || y === 0 || y === this.MAP_HEIGHT - 1) {
+          row.push(this.TILE_WALL);
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Exit door at center bottom
+    this.mapTransitions.push({
+      x: 10,
+      y: 13,
+      targetMap: 'village',
+      targetX: 5,
+      targetY: 8
+    });
+  }
+
+  /**
+   * Create blacksmith interior map
+   */
+  private createBlacksmithInteriorMap(): void {
+    this.MAP_WIDTH = 20;
+    this.MAP_HEIGHT = 15;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Walls on all edges
+        if (x === 0 || x === this.MAP_WIDTH - 1 || y === 0 || y === this.MAP_HEIGHT - 1) {
+          row.push(this.TILE_WALL);
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Exit door at center bottom
+    this.mapTransitions.push({
+      x: 10,
+      y: 13,
+      targetMap: 'village',
+      targetX: 14,
+      targetY: 8
+    });
+  }
+
+  /**
+   * Create elder's house interior map
+   */
+  private createElderHouseInteriorMap(): void {
+    this.MAP_WIDTH = 15;
+    this.MAP_HEIGHT = 12;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Walls on all edges
+        if (x === 0 || x === this.MAP_WIDTH - 1 || y === 0 || y === this.MAP_HEIGHT - 1) {
+          row.push(this.TILE_WALL);
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Exit door at center bottom
+    this.mapTransitions.push({
+      x: 7,
+      y: 10,
+      targetMap: 'village',
+      targetX: 10,
+      targetY: 6
+    });
+  }
+
+  /**
    * Place a cliff obstacle on the map
    * @param startX Top-left X position
    * @param startY Top-left Y position
@@ -604,7 +771,7 @@ export class OverworldScene extends Phaser.Scene {
 
     // Only place outdoor decorations on village map
     if (currentMap === 'village') {
-      // Place house (96x128 at 0.5x = 48x64 pixels = 3x4 tiles) at position (16, 4)
+      // Place Shop/House (right side) at position (16, 4)
       const house = this.add.sprite(
         16 * this.TILE_SIZE,
         4 * this.TILE_SIZE,
@@ -613,14 +780,50 @@ export class OverworldScene extends Phaser.Scene {
       house.setOrigin(0, 0);
       house.setDepth(5); // Above ground, below player
       house.setScale(0.5); // 96x128 at 0.5x = 48x64
-      this.decorations.push({ sprite: house, shopId: 'village_shop' });
+      this.decorations.push({ sprite: house });
 
-      // Place animals
+      // Place Blacksmith (middle right) at position (12, 4)
+      const blacksmith = this.add.sprite(
+        12 * this.TILE_SIZE,
+        4 * this.TILE_SIZE,
+        'house_wood'
+      );
+      blacksmith.setOrigin(0, 0);
+      blacksmith.setDepth(5);
+      blacksmith.setScale(0.5);
+      blacksmith.setTint(0x888888); // Gray tint to differentiate
+      this.decorations.push({ sprite: blacksmith });
+
+      // Place Inn (left side) at position (3, 4)
+      const inn = this.add.sprite(
+        3 * this.TILE_SIZE,
+        4 * this.TILE_SIZE,
+        'house_wood'
+      );
+      inn.setOrigin(0, 0);
+      inn.setDepth(5);
+      inn.setScale(0.5);
+      inn.setTint(0xaa8844); // Brown tint to differentiate
+      this.decorations.push({ sprite: inn });
+
+      // Place Elder's House (top center) at position (9, 2) - smaller 3x3
+      const elderHouse = this.add.sprite(
+        9 * this.TILE_SIZE,
+        2 * this.TILE_SIZE,
+        'house_wood'
+      );
+      elderHouse.setOrigin(0, 0);
+      elderHouse.setDepth(5);
+      elderHouse.setScale(0.375); // Smaller scale for 3x3 building
+      elderHouse.setTint(0xffdd99); // Light yellow tint
+      this.decorations.push({ sprite: elderHouse });
+
+      // Place animals (adjusted positions to avoid new buildings)
       const animalPositions = [
-        { key: 'cow', x: 3, y: 3 },
-        { key: 'pig', x: 6, y: 3 },
-        { key: 'chicken', x: 3, y: 6 },
-        { key: 'sheep', x: 6, y: 6 }
+        { key: 'cow', x: 7, y: 9 },
+        { key: 'pig', x: 9, y: 11 },
+        { key: 'chicken', x: 12, y: 11 },
+        { key: 'sheep', x: 15, y: 11 }
       ];
 
       animalPositions.forEach(({ key, x, y }) => {
@@ -635,10 +838,6 @@ export class OverworldScene extends Phaser.Scene {
         animal.setScale(0.5); // 32x32 at 0.5x = 16x16
         this.decorations.push({ sprite: animal });
       });
-    }
-    // House interior decorations could be added here
-    else if (currentMap === 'house_interior') {
-      // TODO: Add interior furniture, shopkeeper counter, etc.
     }
   }
 

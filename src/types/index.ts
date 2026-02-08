@@ -89,6 +89,14 @@ export interface CombatEvent {
   combatResult: 'victory' | 'defeat' | null;
 }
 
+export interface DialogChoice {
+  text: string;
+  action?: string; // Action to trigger (heal, accept_quest, etc.)
+  nextDialog?: string; // Next dialog to show
+  cost?: number; // Gold cost for actions like resting
+  condition?: string; // Event flag condition
+}
+
 export interface DialogEntry {
   id: string;
   speaker: string;
@@ -96,6 +104,7 @@ export interface DialogEntry {
   condition?: string;
   setsFlag?: string;
   next?: string;
+  choices?: DialogChoice[]; // Optional choices for player
 }
 
 export interface MapTrigger {

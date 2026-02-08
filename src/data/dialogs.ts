@@ -3,11 +3,11 @@ import type { DialogEntry } from '@/types';
 /**
  * Dialog data for NPCs, events, and story
  *
- * Dialog entries kan have conditions, flags, og next references
+ * Dialog entries kan have conditions, flags, choices og next references
  */
 export const DIALOGS: Record<string, DialogEntry> = {
   // ============================================================================
-  // Village NPCs
+  // Village Elder
   // ============================================================================
 
   elder_greeting: {
@@ -20,19 +20,50 @@ export const DIALOGS: Record<string, DialogEntry> = {
     ],
     condition: '!met_elder',
     setsFlag: 'met_elder',
-    next: 'elder_quest'
+    choices: [
+      {
+        text: 'Ja, jeg vil hjælpe!',
+        action: 'accept_quest',
+        nextDialog: 'elder_quest_accepted'
+      },
+      {
+        text: 'Nej, jeg er ikke klar endnu.',
+        action: 'decline_quest',
+        nextDialog: 'elder_quest_declined'
+      }
+    ]
+  },
+
+  elder_quest_accepted: {
+    id: 'elder_quest_accepted',
+    speaker: 'Landsby Ældste',
+    lines: [
+      'Tak, modig helt!',
+      'Dragen har brændt marker og kidnappet rejsende.',
+      'Søg mod nord gennem skoven. Men vær forsigtig - der er monstre derude.',
+      'Besøg smeden og kroen for at forberede dig!'
+    ],
+    setsFlag: 'quest_dragon_active'
+  },
+
+  elder_quest_declined: {
+    id: 'elder_quest_declined',
+    speaker: 'Landsby Ældste',
+    lines: [
+      'Jeg forstår. Tag din tid til at forberede dig.',
+      'Kom tilbage når du er klar til at hjælpe os.'
+    ]
   },
 
   elder_quest: {
     id: 'elder_quest',
     speaker: 'Landsby Ældste',
     lines: [
-      'Dragen har brændt marker og kidnappet rejsende.',
-      'Hvis du besejrer den, vil du blive hyldet som vor helt!',
-      'Søg mod nord gennem skoven. Men vær forsigtig - der er monstre derude.'
+      'Dragen venter i bjergene mod nord.',
+      'Gå gennem skoven og find dens hule.',
+      'Held og lykke, helt!'
     ],
-    condition: '!dragon_defeated',
-    setsFlag: 'quest_dragon_active'
+    condition: 'quest_dragon_active'
   },
 
   elder_victory: {
@@ -46,15 +77,71 @@ export const DIALOGS: Record<string, DialogEntry> = {
     condition: 'dragon_defeated'
   },
 
+  // ============================================================================
+  // Inn / Kro
+  // ============================================================================
+
+  innkeeper_greeting: {
+    id: 'innkeeper_greeting',
+    speaker: 'Kromand',
+    lines: [
+      'Velkommen til Den Glade Jæger!',
+      'Trænger du til en hvil? Et varmt måltid og en seng koster kun 50 guld.'
+    ],
+    choices: [
+      {
+        text: 'Ja tak, jeg vil gerne hvile',
+        action: 'rest',
+        cost: 50,
+        nextDialog: 'innkeeper_rest_done'
+      },
+      {
+        text: 'Nej tak, ikke lige nu'
+      }
+    ]
+  },
+
+  innkeeper_rest_done: {
+    id: 'innkeeper_rest_done',
+    speaker: 'Kromand',
+    lines: [
+      'Sov godt!',
+      '...',
+      'God morgen! Du er helt udhvilet nu!'
+    ]
+  },
+
+  // ============================================================================
+  // Blacksmith / Smed
+  // ============================================================================
+
+  blacksmith_greeting: {
+    id: 'blacksmith_greeting',
+    speaker: 'Smed',
+    lines: [
+      'Velkommen til smedjen!',
+      'Jeg laver det fineste våben og rustning i hele regionen.',
+      'Vil du se hvad jeg har på lager?'
+    ]
+  },
+
+  // ============================================================================
+  // Village Shopkeeper
+  // ============================================================================
+
   shopkeeper_greeting: {
     id: 'shopkeeper_greeting',
     speaker: 'Købmand',
     lines: [
       'Velkommen til min butik!',
-      'Jeg har alt du behøver til dit eventyr.',
+      'Jeg har sundhedspotions og rejseudstyr.',
       'Vil du se mit udvalg?'
     ]
   },
+
+  // ============================================================================
+  // Village NPCs
+  // ============================================================================
 
   villager_woman_greeting: {
     id: 'villager_woman_greeting',

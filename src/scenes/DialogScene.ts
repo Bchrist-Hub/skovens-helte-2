@@ -1,27 +1,35 @@
 import Phaser from 'phaser';
 import { InputService } from '@/services/InputService';
-import type { DialogEntry } from '@/types';
+import { GameStateManager } from '@/systems/GameState';
+import { getDialog } from '@/data/dialogs';
+import type { DialogEntry, DialogChoice } from '@/types';
 
 /**
  * DialogScene - Overlay scene til at vise dialog med typewriter-effekt
  *
  * VIGTIG: Dette er en overlay-scene. Den startes med scene.launch() og
  * stoppes med scene.stop() (IKKE pause/resume) for at undgå input-problemer.
+ *
+ * Supports dialog choices for interactive conversations.
  */
 export class DialogScene extends Phaser.Scene {
   private inputService!: InputService;
+  private gameState!: GameStateManager;
 
   // Dialog state
   private currentDialog: DialogEntry | null = null;
   private currentLineIndex: number = 0;
   private isTyping: boolean = false;
   private canAdvance: boolean = false;
+  private showingChoices: boolean = false;
+  private selectedChoiceIndex: number = 0;
 
   // UI elements
   private dialogBox!: Phaser.GameObjects.Graphics;
   private speakerText!: Phaser.GameObjects.Text;
   private dialogText!: Phaser.GameObjects.Text;
   private continueIcon!: Phaser.GameObjects.Text;
+  private choiceTexts: Phaser.GameObjects.Text[] = [];
 
   // Typewriter
   private typewriterTimer?: Phaser.Time.TimerEvent;
@@ -43,10 +51,13 @@ export class DialogScene extends Phaser.Scene {
     this.currentDialog = data.dialog;
     this.onComplete = data.onComplete;
     this.currentLineIndex = 0;
+    this.showingChoices = false;
+    this.selectedChoiceIndex = 0;
   }
 
   create(): void {
     this.inputService = new InputService(this);
+    this.gameState = GameStateManager.getInstance();
     this.createDialogBox();
 
     // Start vise den første linje
@@ -65,6 +76,12 @@ export class DialogScene extends Phaser.Scene {
 
     if (!this.canAdvance) return;
 
+    // If showing choices, handle choice selection
+    if (this.showingChoices) {
+      this.handleChoiceInput();
+      return;
+    }
+
     // Skip typewriter or advance to next line
     if (this.inputService.justPressed('action') || this.inputService.justPressed('cancel')) {
       if (this.isTyping) {
@@ -74,6 +91,119 @@ export class DialogScene extends Phaser.Scene {
         // Advance to next line or close dialog
         this.advanceDialog();
       }
+    }
+  }
+
+  /**
+   * Handle input when showing choices
+   */
+  private handleChoiceInput(): void {
+    const choices = this.getAvailableChoices();
+    if (!choices || choices.length === 0) return;
+
+    // Navigate choices
+    if (this.inputService.justPressed('up')) {
+      this.selectedChoiceIndex = Math.max(0, this.selectedChoiceIndex - 1);
+      this.updateChoiceDisplay();
+    }
+
+    if (this.inputService.justPressed('down')) {
+      this.selectedChoiceIndex = Math.min(choices.length - 1, this.selectedChoiceIndex + 1);
+      this.updateChoiceDisplay();
+    }
+
+    // Select choice
+    if (this.inputService.justPressed('action')) {
+      this.selectChoice(choices[this.selectedChoiceIndex]);
+    }
+
+    // Cancel (close dialog)
+    if (this.inputService.justPressed('cancel')) {
+      this.closeDialog();
+    }
+  }
+
+  /**
+   * Get available choices (filtered by conditions)
+   */
+  private getAvailableChoices(): DialogChoice[] | undefined {
+    if (!this.currentDialog?.choices) return undefined;
+
+    const eventFlags = this.gameState.getEventFlags();
+
+    return this.currentDialog.choices.filter(choice => {
+      if (!choice.condition) return true;
+
+      // Check condition (simple flag check)
+      if (choice.condition.startsWith('!')) {
+        // Negated condition
+        const flag = choice.condition.substring(1);
+        return !eventFlags[flag];
+      } else {
+        // Positive condition
+        return eventFlags[choice.condition];
+      }
+    });
+  }
+
+  /**
+   * Select a dialog choice
+   */
+  private selectChoice(choice: DialogChoice): void {
+    this.showingChoices = false;
+    this.clearChoiceDisplay();
+
+    // Handle choice action
+    if (choice.action) {
+      this.executeAction(choice.action, choice.cost);
+    }
+
+    // Show next dialog if specified
+    if (choice.nextDialog) {
+      const nextDialog = getDialog(choice.nextDialog);
+      if (nextDialog) {
+        this.currentDialog = nextDialog;
+        this.currentLineIndex = 0;
+        this.showCurrentLine();
+        return;
+      }
+    }
+
+    // Otherwise close dialog
+    this.closeDialog();
+  }
+
+  /**
+   * Execute a dialog action
+   */
+  private executeAction(action: string, cost?: number): void {
+    const player = this.gameState.getPlayer();
+    const gold = this.gameState.getGold();
+
+    switch (action) {
+      case 'rest':
+        // Rest at inn - heal to full HP
+        if (cost && gold >= cost) {
+          player.currentHP = player.baseStats.maxHP;
+          player.currentMP = player.baseStats.maxMP;
+          this.gameState.addGold(-cost);
+          console.log(`Rested at inn. HP/MP restored. Paid ${cost}g.`);
+        }
+        break;
+
+      case 'accept_quest':
+        // Accept dragon quest
+        this.gameState.setEventFlag('quest_dragon_active', true);
+        console.log('Quest accepted: Defeat the Dragon');
+        break;
+
+      case 'decline_quest':
+        // Decline quest (no action needed)
+        console.log('Quest declined');
+        break;
+
+      default:
+        console.warn(`Unknown action: ${action}`);
     }
   }
 
@@ -141,7 +271,12 @@ export class DialogScene extends Phaser.Scene {
 
     const lines = this.currentDialog.lines;
     if (this.currentLineIndex >= lines.length) {
-      this.closeDialog();
+      // All lines shown, check for choices
+      if (this.currentDialog.choices && this.currentDialog.choices.length > 0) {
+        this.showChoices();
+      } else {
+        this.closeDialog();
+      }
       return;
     }
 
@@ -155,6 +290,74 @@ export class DialogScene extends Phaser.Scene {
     this.continueIcon.setVisible(false);
 
     this.startTypewriter();
+  }
+
+  /**
+   * Show dialog choices
+   */
+  private showChoices(): void {
+    const choices = this.getAvailableChoices();
+    if (!choices || choices.length === 0) {
+      this.closeDialog();
+      return;
+    }
+
+    this.showingChoices = true;
+    this.selectedChoiceIndex = 0;
+    this.continueIcon.setVisible(false);
+
+    // Clear dialog text to make room for choices
+    this.dialogText.setText('');
+
+    // Create choice UI
+    const boxX = 10;
+    const boxY = this.cameras.main.height - 70;
+    let y = boxY + 8;
+
+    choices.forEach((choice) => {
+      let choiceText = choice.text;
+
+      // Add cost if present
+      if (choice.cost) {
+        choiceText += ` (${choice.cost}g)`;
+      }
+
+      const text = this.add.text(boxX + 16, y, choiceText, {
+        fontFamily: 'Arial',
+        fontSize: '11px',
+        color: '#ffffff'
+      });
+
+      this.choiceTexts.push(text);
+      y += 14;
+    });
+
+    this.updateChoiceDisplay();
+  }
+
+  /**
+   * Update choice display (highlight selected)
+   */
+  private updateChoiceDisplay(): void {
+    this.choiceTexts.forEach((text, index) => {
+      if (index === this.selectedChoiceIndex) {
+        text.setColor('#ffff00');
+        text.setFontStyle('bold');
+        text.setText('► ' + text.text.replace('► ', ''));
+      } else {
+        text.setColor('#ffffff');
+        text.setFontStyle('normal');
+        text.setText(text.text.replace('► ', ''));
+      }
+    });
+  }
+
+  /**
+   * Clear choice display
+   */
+  private clearChoiceDisplay(): void {
+    this.choiceTexts.forEach(text => text.destroy());
+    this.choiceTexts = [];
   }
 
   /**
@@ -209,8 +412,12 @@ export class DialogScene extends Phaser.Scene {
       // Show next line
       this.showCurrentLine();
     } else {
-      // Dialog finished
-      this.closeDialog();
+      // Check for choices or close
+      if (this.currentDialog?.choices && this.currentDialog.choices.length > 0) {
+        this.showChoices();
+      } else {
+        this.closeDialog();
+      }
     }
   }
 
@@ -219,6 +426,9 @@ export class DialogScene extends Phaser.Scene {
    */
   private closeDialog(): void {
     this.canAdvance = false;
+
+    // Clear choices if showing
+    this.clearChoiceDisplay();
 
     // Fade out
     this.cameras.main.fadeOut(200, 0, 0, 0);
@@ -242,6 +452,7 @@ export class DialogScene extends Phaser.Scene {
     if (this.typewriterTimer) {
       this.typewriterTimer.destroy();
     }
+    this.clearChoiceDisplay();
     this.inputService.destroy();
     this.currentDialog = null;
     this.onComplete = undefined;
