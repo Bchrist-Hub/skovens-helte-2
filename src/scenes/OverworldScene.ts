@@ -6,7 +6,7 @@ import { getShop } from '@/data/shops';
 import { getNPCsForMap } from '@/data/npcs';
 import { getDialog } from '@/data/dialogs';
 import { EventSystem } from '@/systems/EventSystem';
-import type { Direction, DialogEntry, NPC } from '@/types';
+import type { Direction, NPC } from '@/types';
 
 /**
  * OverworldScene - Hovedscene hvor spilleren bevæger sig rundt
@@ -33,8 +33,8 @@ export class OverworldScene extends Phaser.Scene {
 
   // Map
   private readonly TILE_SIZE = 16;
-  private readonly MAP_WIDTH = 20;
-  private readonly MAP_HEIGHT = 15;
+  private MAP_WIDTH = 20; // Not readonly - varies by map
+  private MAP_HEIGHT = 15; // Not readonly - varies by map
   private tilemap: number[][] = [];
 
   // Tile types
@@ -303,10 +303,17 @@ export class OverworldScene extends Phaser.Scene {
   private createTestMap(): void {
     const currentMap = this.gameState.getState().currentMap;
 
-    if (currentMap === 'house_interior') {
-      this.createHouseInteriorMap();
-    } else {
-      this.createVillageMap();
+    switch (currentMap) {
+      case 'house_interior':
+        this.createHouseInteriorMap();
+        break;
+      case 'village_outskirts':
+        this.createVillageOutskirtsMap();
+        break;
+      case 'village':
+      default:
+        this.createVillageMap();
+        break;
     }
   }
 
@@ -314,6 +321,8 @@ export class OverworldScene extends Phaser.Scene {
    * Create the village map (outdoor)
    */
   private createVillageMap(): void {
+    this.MAP_WIDTH = 20;
+    this.MAP_HEIGHT = 15;
     this.tilemap = [];
     this.cliffs = [];
     this.mapTransitions = [];
@@ -321,9 +330,16 @@ export class OverworldScene extends Phaser.Scene {
     for (let y = 0; y < this.MAP_HEIGHT; y++) {
       const row: number[] = [];
       for (let x = 0; x < this.MAP_WIDTH; x++) {
-        // Create walls around the edges
-        if (x === 0 || x === this.MAP_WIDTH - 1 || y === 0 || y === this.MAP_HEIGHT - 1) {
+        // Create walls around the edges (except north exit)
+        if (x === 0 || x === this.MAP_WIDTH - 1 || y === this.MAP_HEIGHT - 1) {
           row.push(this.TILE_WALL);
+        } else if (y === 0) {
+          // North edge - open path in middle for transition
+          if (x >= 9 && x <= 11) {
+            row.push(this.TILE_GROUND); // Open path north
+          } else {
+            row.push(this.TILE_WALL);
+          }
         } else {
           row.push(this.TILE_GROUND);
         }
@@ -359,12 +375,89 @@ export class OverworldScene extends Phaser.Scene {
       targetX: 10,
       targetY: 11  // Spawn just north of the exit door
     });
+
+    // North exit to Village Outskirts
+    this.mapTransitions.push({
+      x: 10,
+      y: 0,
+      targetMap: 'village_outskirts',
+      targetX: 12,
+      targetY: 18
+    });
+  }
+
+  /**
+   * Create village outskirts map (transition area)
+   */
+  private createVillageOutskirtsMap(): void {
+    this.MAP_WIDTH = 25;
+    this.MAP_HEIGHT = 20;
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Create walls around edges (except south back to village, north to forest)
+        if (x === 0 || x === this.MAP_WIDTH - 1) {
+          row.push(this.TILE_WALL);
+        } else if (y === 0) {
+          // North edge - open path to forest (future)
+          if (x >= 11 && x <= 14) {
+            row.push(this.TILE_GROUND); // Open path north (to forest)
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else if (y === this.MAP_HEIGHT - 1) {
+          // South edge - open path back to village
+          if (x >= 11 && x <= 13) {
+            row.push(this.TILE_GROUND); // Open path south (to village)
+          } else {
+            row.push(this.TILE_WALL);
+          }
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Make sure spawn point is clear
+    if (this.playerGridY < this.MAP_HEIGHT && this.playerGridX < this.MAP_WIDTH) {
+      this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
+    }
+
+    // Place some obstacles (cliffs and small cliff groupings)
+    this.placeCliff(6, 5, 'small');
+    this.placeCliff(18, 8, 'small');
+    this.placeCliff(10, 12, 'large');
+
+    // South exit back to Village
+    this.mapTransitions.push({
+      x: 12,
+      y: this.MAP_HEIGHT - 1,
+      targetMap: 'village',
+      targetX: 10,
+      targetY: 1
+    });
+
+    // North exit to Forest Path (not implemented yet, but set up)
+    // this.mapTransitions.push({
+    //   x: 12,
+    //   y: 0,
+    //   targetMap: 'forest_path',
+    //   targetX: 15,
+    //   targetY: 18
+    // });
   }
 
   /**
    * Create house interior map
    */
   private createHouseInteriorMap(): void {
+    this.MAP_WIDTH = 20;
+    this.MAP_HEIGHT = 15;
     this.tilemap = [];
     this.cliffs = [];
     this.mapTransitions = [];

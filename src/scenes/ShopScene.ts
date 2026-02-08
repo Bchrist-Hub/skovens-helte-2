@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { InputService } from '@/services/InputService';
 import { GameStateManager } from '@/systems/GameState';
-import { ShopSystem, type Shop, type ShopItem } from '@/systems/ShopSystem';
+import { ShopSystem, type Shop } from '@/systems/ShopSystem';
 import { getItem } from '@/data/items';
 
 /**
@@ -154,7 +154,6 @@ export class ShopScene extends Phaser.Scene {
     this.itemTexts = [];
 
     const maxVisibleItems = 6; // Maximum items shown at once
-    const inventory = this.gameState.getInventory();
 
     // Auto-scroll: ensure selected item is visible
     if (this.selectedItemIndex < this.scrollOffset) {
