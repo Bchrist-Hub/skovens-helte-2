@@ -56,12 +56,19 @@ export class OverworldScene extends Phaser.Scene {
   // Decorations (animals, house, etc.)
   private decorations: Array<{ sprite: Phaser.GameObjects.Sprite; shopId?: string }> = [];
 
+  // Map transitions (portals/doors)
+  private mapTransitions: Array<{ x: number; y: number; targetMap: string; targetX: number; targetY: number }> = [];
+
   constructor() {
     super({ key: 'OverworldScene' });
   }
 
   create(): void {
     console.log('OverworldScene: Starting...');
+
+    // Reset movement state
+    this.isMoving = false;
+    this.queuedDirection = null;
 
     this.inputService = new InputService(this);
     this.gameState = GameStateManager.getInstance();
@@ -256,6 +263,9 @@ export class OverworldScene extends Phaser.Scene {
         // Check for random encounter (DISABLED FOR TESTING - use 'C' key instead)
         // this.checkForEncounter();
 
+        // Check for map transitions
+        this.checkForMapTransition();
+
         // Check for queued direction
         if (this.queuedDirection) {
           const dir = this.queuedDirection;
@@ -288,13 +298,25 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /**
-   * Create a simple test map
-   * 0 = walkable ground
-   * 1 = wall
+   * Create map based on current map ID
    */
   private createTestMap(): void {
+    const currentMap = this.gameState.getState().currentMap;
+
+    if (currentMap === 'house_interior') {
+      this.createHouseInteriorMap();
+    } else {
+      this.createVillageMap();
+    }
+  }
+
+  /**
+   * Create the village map (outdoor)
+   */
+  private createVillageMap(): void {
     this.tilemap = [];
-    this.cliffs = []; // Clear any existing cliffs
+    this.cliffs = [];
+    this.mapTransitions = [];
 
     for (let y = 0; y < this.MAP_HEIGHT; y++) {
       const row: number[] = [];
@@ -302,13 +324,7 @@ export class OverworldScene extends Phaser.Scene {
         // Create walls around the edges
         if (x === 0 || x === this.MAP_WIDTH - 1 || y === 0 || y === this.MAP_HEIGHT - 1) {
           row.push(this.TILE_WALL);
-        }
-        // Create some random obstacles
-        else if (Math.random() < 0.1) {
-          row.push(this.TILE_WALL);
-        }
-        // Otherwise ground
-        else {
+        } else {
           row.push(this.TILE_GROUND);
         }
       }
@@ -319,14 +335,65 @@ export class OverworldScene extends Phaser.Scene {
     this.tilemap[this.playerGridY][this.playerGridX] = this.TILE_GROUND;
 
     // Place some cliff obstacles
-    // Large cliff (3x3) at position (4, 3)
     this.placeCliff(4, 3, 'large');
-
-    // Small cliff (2x2) at position (13, 5)
     this.placeCliff(13, 5, 'small');
-
-    // Another large cliff (3x3) at position (10, 9)
     this.placeCliff(10, 9, 'large');
+
+    // Block tiles where house is (3x4 tiles at position 16,4)
+    // House is at (16, 4), size 3x4 tiles
+    for (let y = 4; y < 8; y++) {
+      for (let x = 16; x < 19; x++) {
+        // Leave door open at (17, 7) for entrance
+        if (!(x === 17 && y === 7)) {
+          this.tilemap[y][x] = this.TILE_WALL;
+        }
+      }
+    }
+
+    // Add map transition at house door (bottom center of house)
+    // House is at (16, 4), size 3x4 tiles, so door is at center bottom: (17, 7)
+    this.mapTransitions.push({
+      x: 17,
+      y: 7,
+      targetMap: 'house_interior',
+      targetX: 10,
+      targetY: 11  // Spawn just north of the exit door
+    });
+  }
+
+  /**
+   * Create house interior map
+   */
+  private createHouseInteriorMap(): void {
+    this.tilemap = [];
+    this.cliffs = [];
+    this.mapTransitions = [];
+
+    for (let y = 0; y < this.MAP_HEIGHT; y++) {
+      const row: number[] = [];
+      for (let x = 0; x < this.MAP_WIDTH; x++) {
+        // Walls on all edges
+        if (x === 0 || x === this.MAP_WIDTH - 1 || y === 0 || y === this.MAP_HEIGHT - 1) {
+          row.push(this.TILE_WALL);
+        }
+        // Interior wall to create two rooms, with door at (10, 13)
+        else if (x === 10 && y > 3 && y < this.MAP_HEIGHT - 1 && y !== 13) {
+          row.push(this.TILE_WALL);
+        } else {
+          row.push(this.TILE_GROUND);
+        }
+      }
+      this.tilemap.push(row);
+    }
+
+    // Exit door at (10, 13) - go back to village when standing on it
+    this.mapTransitions.push({
+      x: 10,
+      y: 13,
+      targetMap: 'village',
+      targetX: 17,
+      targetY: 8
+    });
   }
 
   /**
@@ -436,38 +503,71 @@ export class OverworldScene extends Phaser.Scene {
     this.decorations.forEach(deco => deco.sprite.destroy());
     this.decorations = [];
 
-    // Place house (96x128 = 6x8 tiles) at position (16, 4)
-    // House is a shop
-    const house = this.add.sprite(
-      16 * this.TILE_SIZE,
-      4 * this.TILE_SIZE,
-      'house_wood'
-    );
-    house.setOrigin(0, 0);
-    house.setDepth(5); // Above ground, below player
-    house.setScale(0.5); // 96x128 at 0.5x = 48x64
-    this.decorations.push({ sprite: house, shopId: 'village_shop' });
+    const currentMap = this.gameState.getState().currentMap;
 
-    // Place animals (64x64 at 0.25x scale = 16x16)
-    const animalPositions = [
-      { key: 'cow', x: 3, y: 3 },
-      { key: 'pig', x: 6, y: 3 },
-      { key: 'chicken', x: 3, y: 6 },
-      { key: 'sheep', x: 6, y: 6 }
-    ];
-
-    animalPositions.forEach(({ key, x, y }) => {
-      const animal = this.add.sprite(
-        x * this.TILE_SIZE,
-        y * this.TILE_SIZE,
-        key,
-        0  // Use frame 0 (first frame of the spritesheet)
+    // Only place outdoor decorations on village map
+    if (currentMap === 'village') {
+      // Place house (96x128 at 0.5x = 48x64 pixels = 3x4 tiles) at position (16, 4)
+      const house = this.add.sprite(
+        16 * this.TILE_SIZE,
+        4 * this.TILE_SIZE,
+        'house_wood'
       );
-      animal.setOrigin(0, 0);
-      animal.setDepth(5);
-      animal.setScale(0.5); // 32x32 at 0.5x = 16x16
-      this.decorations.push({ sprite: animal });
-    });
+      house.setOrigin(0, 0);
+      house.setDepth(5); // Above ground, below player
+      house.setScale(0.5); // 96x128 at 0.5x = 48x64
+      this.decorations.push({ sprite: house, shopId: 'village_shop' });
+
+      // Place animals
+      const animalPositions = [
+        { key: 'cow', x: 3, y: 3 },
+        { key: 'pig', x: 6, y: 3 },
+        { key: 'chicken', x: 3, y: 6 },
+        { key: 'sheep', x: 6, y: 6 }
+      ];
+
+      animalPositions.forEach(({ key, x, y }) => {
+        const animal = this.add.sprite(
+          x * this.TILE_SIZE,
+          y * this.TILE_SIZE,
+          key,
+          0  // Use frame 0 (first frame of the spritesheet)
+        );
+        animal.setOrigin(0, 0);
+        animal.setDepth(5);
+        animal.setScale(0.5); // 32x32 at 0.5x = 16x16
+        this.decorations.push({ sprite: animal });
+      });
+    }
+    // House interior decorations could be added here
+    else if (currentMap === 'house_interior') {
+      // TODO: Add interior furniture, shopkeeper counter, etc.
+    }
+  }
+
+  /**
+   * Check if player is on a map transition and handle it
+   */
+  private checkForMapTransition(): void {
+    const transition = this.mapTransitions.find(
+      t => t.x === this.playerGridX && t.y === this.playerGridY
+    );
+
+    if (transition) {
+      console.log(`Map transition: ${this.gameState.getState().currentMap} -> ${transition.targetMap}`);
+
+      // Fade out
+      this.cameras.main.fadeOut(300, 0, 0, 0);
+
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        // Update map and position
+        this.gameState.getState().currentMap = transition.targetMap;
+        this.gameState.setPlayerPosition(transition.targetX, transition.targetY);
+
+        // Restart the scene to load new map
+        this.scene.restart();
+      });
+    }
   }
 
   /**
@@ -741,9 +841,23 @@ export class OverworldScene extends Phaser.Scene {
    * Cleanup når scene lukkes
    */
   shutdown(): void {
-    this.inputService.destroy();
+    // Stop all tweens
+    this.tweens.killAll();
+
+    // Reset movement state
+    this.isMoving = false;
+    this.queuedDirection = null;
+
+    // Destroy input service
+    if (this.inputService) {
+      this.inputService.destroy();
+    }
+
+    // Clean up NPCs
     this.npcSprites.forEach(sprite => sprite.destroy());
     this.npcSprites.clear();
+
+    // Clean up decorations
     this.decorations.forEach(deco => deco.sprite.destroy());
     this.decorations = [];
   }

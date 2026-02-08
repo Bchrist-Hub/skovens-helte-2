@@ -66,12 +66,30 @@ export const VILLAGE_NPCS: NPC[] = [
 ];
 
 /**
+ * House interior NPCs
+ */
+export const HOUSE_INTERIOR_NPCS: NPC[] = [
+  {
+    id: 'shopkeeper_interior',
+    name: 'Købmand',
+    sprite: 'npc_merchant',
+    tileX: 5,
+    tileY: 5,
+    dialog: 'shopkeeper_greeting',
+    shopId: 'village_shop',
+    facingDirection: 'down'
+  }
+];
+
+/**
  * Få NPCs for en given map
  */
 export function getNPCsForMap(mapName: string): NPC[] {
   switch (mapName) {
     case 'village':
       return VILLAGE_NPCS;
+    case 'house_interior':
+      return HOUSE_INTERIOR_NPCS;
     default:
       return [];
   }

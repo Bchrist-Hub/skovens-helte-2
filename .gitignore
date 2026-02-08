@@ -11,6 +11,7 @@ dist/
 # Editor directories
 .vscode/
 .idea/
+.claude/
 
 # OS files
 .DS_Store
@@ -22,3 +23,8 @@ Thumbs.db
 # Temporary files
 *.tmp
 .cache/
+
+# Asset packs (not redistributable per license)
+Cute_Fantasy_Free/
+Assets/
+public/assets/
